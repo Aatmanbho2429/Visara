@@ -58,6 +58,7 @@ jobs:
       - name: Build Windows exe
         run: |
           pyinstaller --name Visara `
+            --onefile `
             --windowed `
             --icon visara-logo.ico `
             --add-data "UI/dist/vynce-standalone/browser;UI/dist/vynce-standalone/browser" `
@@ -73,26 +74,11 @@ jobs:
             --hidden-import requests `
             main.py
 
-      # ── NEW — copy Python DLL so app runs without Python installed ──
-      - name: Copy Python DLL into dist
-        run: |
-          $pyPath = (Get-Command python).Source
-          $pyDir  = Split-Path $pyPath
-          $dll    = Join-Path $pyDir "python311.dll"
-          Write-Host "Copying DLL from: $dll"
-          Copy-Item $dll "dist\Visara\python311.dll"
-        shell: pwsh
-
-      # ── NEW — zip entire folder so all files are included ───────────
-      - name: Zip Windows app
-        run: Compress-Archive -Path dist\Visara\* -DestinationPath Visara-Windows.zip
-        shell: pwsh
-
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: Visara-Windows
-          path: Visara-Windows.zip
+          path: dist/Visara.exe
 
 # ══════════════════════════════════════════════════════════════════════
 # BUILD MACOS
@@ -144,6 +130,7 @@ jobs:
       - name: Build macOS app
         run: |
           pyinstaller --name Visara \
+            --onefile \
             --windowed \
             --icon visara-logo.icns \
             --add-data "UI/dist/vynce-standalone/browser:UI/dist/vynce-standalone/browser" \
@@ -160,16 +147,13 @@ jobs:
             main.py
 
       - name: Sign app (free ad-hoc — removes Gatekeeper warning)
-        run: codesign --force --deep --sign - dist/Visara.app
-
-      - name: Zip macOS app
-        run: cd dist && zip -r ../Visara-macOS.zip Visara.app
+        run: codesign --force --deep --sign - dist/Visara
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: Visara-macOS
-          path: Visara-macOS.zip
+          path: dist/Visara
 
 # ══════════════════════════════════════════════════════════════════════
 # CREATE RELEASE
@@ -200,10 +184,10 @@ jobs:
             "version": "${VERSION}",
             "release_notes": "See GitHub release notes for details",
             "windows": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.zip"
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.exe"
             },
             "macos": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS.zip"
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS"
             }
           }
           EOF
@@ -222,7 +206,7 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: "Visara v${{ env.VERSION }}"
           files: |
-            Visara-Windows/Visara-Windows.zip
-            Visara-macOS/Visara-macOS.zip
+            Visara-Windows/Visara.exe
+            Visara-macOS/Visara
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
