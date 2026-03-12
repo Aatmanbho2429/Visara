@@ -35,19 +35,14 @@ jobs:
           pip install psd-tools
           pip install onnx
 
-      - name: Get version from tag
-        run: echo "VERSION=$($env:GITHUB_REF -replace 'refs/tags/v','')" >> $env:GITHUB_ENV
-        shell: pwsh
-
-      - name: Download encrypted model from release assets
+      - name: Download encrypted model using GitHub CLI
         run: |
-          $version = $env:VERSION
-          $url = "https://github.com/Aatmanbho2429/Visara/releases/download/v${version}/clip_vitb32.onnx.enc"
-          Write-Host "Downloading from: $url"
           New-Item -ItemType Directory -Force -Path "models"
-          Invoke-WebRequest -Uri $url -OutFile "models/clip_vitb32.onnx.enc" -Headers @{Authorization = "token ${{ secrets.GITHUB_TOKEN }}"}
+          gh release download v1.0.0 --repo Aatmanbho2429/Visara --pattern "clip_vitb32.onnx.enc" --dir "models"
           Write-Host "Model downloaded: $(Get-Item models/clip_vitb32.onnx.enc | Select-Object -ExpandProperty Length) bytes"
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -104,17 +99,13 @@ jobs:
           pip install psd-tools
           pip install onnx
 
-      - name: Get version from tag
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-
-      - name: Download encrypted model from release assets
+      - name: Download encrypted model using GitHub CLI
         run: |
           mkdir -p models
-          curl -L \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/clip_vitb32.onnx.enc" \
-            -o "models/clip_vitb32.onnx.enc"
+          gh release download v1.0.0 --repo Aatmanbho2429/Visara --pattern "clip_vitb32.onnx.enc" --dir "models"
           echo "Model size: $(wc -c < models/clip_vitb32.onnx.enc) bytes"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
