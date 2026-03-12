@@ -63,13 +63,21 @@ jobs:
             --add-data "UI/dist/vynce-standalone/browser;UI/dist/vynce-standalone/browser" `
             --add-data "models;models" `
             --add-data "visara-logo.ico;." `
+            --collect-all onnxruntime `
+            --collect-all pywebview `
+            --collect-all faiss `
+            --hidden-import PIL `
+            --hidden-import PIL._imagingtk `
+            --hidden-import psd_tools `
+            --hidden-import cryptography `
+            --hidden-import requests `
             main.py
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: Visara-Windows
-          path: dist/Visara/Visara.exe      # ← FIXED: was dist/Visara.exe
+          path: dist/Visara/Visara.exe
 
 # ══════════════════════════════════════════════════════════════════════
 # BUILD MACOS
@@ -126,6 +134,14 @@ jobs:
             --add-data "UI/dist/vynce-standalone/browser:UI/dist/vynce-standalone/browser" \
             --add-data "models:models" \
             --add-data "visara-logo.icns:." \
+            --collect-all onnxruntime \
+            --collect-all pywebview \
+            --collect-all faiss \
+            --hidden-import PIL \
+            --hidden-import PIL._imagingtk \
+            --hidden-import psd_tools \
+            --hidden-import cryptography \
+            --hidden-import requests \
             main.py
 
       - name: Sign app (free ad-hoc — removes Gatekeeper warning)
