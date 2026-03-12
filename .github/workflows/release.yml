@@ -127,10 +127,10 @@ jobs:
           npm install
           npm run build:angular
 
+      # ── CHANGED — removed --onefile → proper .app bundle ──────────
       - name: Build macOS app
         run: |
           pyinstaller --name Visara \
-            --onefile \
             --windowed \
             --icon visara-logo.icns \
             --add-data "UI/dist/vynce-standalone/browser:UI/dist/vynce-standalone/browser" \
@@ -146,14 +146,20 @@ jobs:
             --hidden-import requests \
             main.py
 
-      - name: Sign app (free ad-hoc — removes Gatekeeper warning)
-        run: codesign --force --deep --sign - dist/Visara
+      # ── CHANGED — proper signing + remove quarantine flag ──────────
+      - name: Sign and remove quarantine
+        run: |
+          codesign --force --deep --sign - dist/Visara.app
+          xattr -cr dist/Visara.app
+
+      - name: Zip macOS app
+        run: cd dist && zip -r ../Visara-macOS.zip Visara.app
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: Visara-macOS
-          path: dist/Visara
+          path: Visara-macOS.zip
 
 # ══════════════════════════════════════════════════════════════════════
 # CREATE RELEASE
@@ -187,7 +193,7 @@ jobs:
               "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.exe"
             },
             "macos": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS"
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS.zip"
             }
           }
           EOF
@@ -207,6 +213,6 @@ jobs:
           name: "Visara v${{ env.VERSION }}"
           files: |
             Visara-Windows/Visara.exe
-            Visara-macOS/Visara
+            Visara-macOS/Visara-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
