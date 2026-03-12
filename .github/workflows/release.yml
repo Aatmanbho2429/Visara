@@ -73,11 +73,26 @@ jobs:
             --hidden-import requests `
             main.py
 
+      # ── NEW — copy Python DLL so app runs without Python installed ──
+      - name: Copy Python DLL into dist
+        run: |
+          $pyPath = (Get-Command python).Source
+          $pyDir  = Split-Path $pyPath
+          $dll    = Join-Path $pyDir "python311.dll"
+          Write-Host "Copying DLL from: $dll"
+          Copy-Item $dll "dist\Visara\python311.dll"
+        shell: pwsh
+
+      # ── NEW — zip entire folder so all files are included ───────────
+      - name: Zip Windows app
+        run: Compress-Archive -Path dist\Visara\* -DestinationPath Visara-Windows.zip
+        shell: pwsh
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: Visara-Windows
-          path: dist/Visara/Visara.exe
+          path: Visara-Windows.zip
 
 # ══════════════════════════════════════════════════════════════════════
 # BUILD MACOS
@@ -185,7 +200,7 @@ jobs:
             "version": "${VERSION}",
             "release_notes": "See GitHub release notes for details",
             "windows": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.exe"
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.zip"
             },
             "macos": {
               "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS.zip"
@@ -207,7 +222,7 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: "Visara v${{ env.VERSION }}"
           files: |
-            Visara-Windows/Visara.exe
+            Visara-Windows/Visara-Windows.zip
             Visara-macOS/Visara-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
