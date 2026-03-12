@@ -1,0 +1,189 @@
+// ═══════════════════════════════════════════════════════════════════════
+// SIDEBAR — supports SVG logo image
+// ═══════════════════════════════════════════════════════════════════════
+
+.sidebar {
+    background: $sidebar-bg;
+    border-right: 1px solid $surface-border;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    height: 100vh;
+    position: relative;
+
+    // Subtle teal accent line on the right edge
+    &::after {
+        content: '';
+        position: absolute;
+        top: 15%;
+        right: 0;
+        width: 1px;
+        height: 70%;
+        background: linear-gradient(180deg,
+            transparent 0%,
+            rgba($accent, 0.35) 30%,
+            rgba($accent, 0.35) 70%,
+            transparent 100%
+        );
+        pointer-events: none;
+    }
+
+    // ── Logo bar ───────────────────────────────────────────────────
+    &__logo {
+        height: 6.4rem;
+        padding: 0 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0;
+        overflow: hidden;
+        border-bottom: 1px solid $surface-border;
+        background: rgba($accent, 0.05);
+        transition: padding $t-smooth, justify-content $t-smooth;
+        flex-shrink: 0;
+
+        // ── Full horizontal SVG logo ───────────────────────────
+        img {
+            height: 28px;
+            width: auto;
+            max-width: 16rem;      // prevents overflow in normal state
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+            transition:
+                opacity $t-base,
+                max-width $t-smooth,
+                transform $t-smooth;
+        }
+
+        // ── Collapsed icon mark ────────────────────────────────
+        // Small branded square shown only when sidebar is collapsed
+        &__icon {
+            display: none;
+            width: 3.2rem;
+            height: 3.2rem;
+            border-radius: 0.8rem;
+            background: linear-gradient(135deg, $accent 0%, $color-green-400 100%);
+            box-shadow: 0 0 12px rgba($accent, 0.4);
+            flex-shrink: 0;
+        }
+    }
+}
+
+// ── Nav links ──────────────────────────────────────────────────────────
+.sidebar-nav {
+    flex: 1;
+    padding: 1.4rem 0.8rem;
+    transition: padding $t-smooth;
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    li {
+        &.active a {
+            background: rgba($accent, 0.12);
+            color: $accent;
+            border-left-color: $accent;
+            i { color: $accent; }
+        }
+    }
+
+    a {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 1.1rem 1.4rem;
+        font-size: 1.35rem;
+        font-weight: 500;
+        color: $text-secondary;
+        text-decoration: none;
+        border-radius: $r-sm;
+        border-left: 2px solid transparent;
+        transition:
+            background $t-base,
+            color $t-base,
+            border-color $t-base,
+            padding $t-smooth;
+
+        &:hover {
+            background: $surface-hover;
+            color: $text-primary;
+            border-left-color: rgba($accent, 0.4);
+        }
+
+        i {
+            font-size: 1.6rem;
+            min-width: 2rem;
+            color: $text-muted;
+            transition: color $t-base, transform $t-smooth;
+        }
+
+        .label {
+            white-space: nowrap;
+            transition: opacity $t-base, transform $t-smooth;
+        }
+    }
+}
+
+// ── Collapsed state ────────────────────────────────────────────────────
+.sidebar.collapsed {
+
+    .sidebar__logo {
+        padding: 0;
+        justify-content: center;
+
+        // Shrink and hide the full logo
+        img {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-0.5rem);
+        }
+
+        // Show the small square icon instead
+        &__icon {
+            display: block;
+        }
+    }
+
+    .sidebar-nav {
+        padding: 1.4rem 0.4rem;
+
+        a {
+            justify-content: center;
+            padding: 1.1rem 0;
+            border-left: none;
+        }
+
+        i {
+            min-width: unset;
+            transform: scale(1.1);
+        }
+
+        .label {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+    }
+}
+
+// ── Hamburger toggle ───────────────────────────────────────────────────
+.sidebar-toggle {
+    margin: 0.8rem 1.2rem;
+    align-self: flex-start;
+    color: $text-secondary !important;
+    background: transparent !important;
+    border: none !important;
+    transition: color $t-base !important;
+
+    &:hover { color: $accent !important; }
+}

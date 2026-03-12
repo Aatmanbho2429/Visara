@@ -1,0 +1,122 @@
+// ═══════════════════════════════════════════════════════════════════════
+// IMAGE CARD  — search result tile
+// ═══════════════════════════════════════════════════════════════════════
+
+.image-card {
+    // Responsive grid: fills container, min 260px per card
+    flex: 0 0 auto;
+    width: calc(33.333% - 2.8rem);
+    min-width: 24rem;
+
+    background: $surface-raised;
+    border-radius: $r-lg;
+    border: 1px solid $surface-border;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    transition:
+        transform $t-base,
+        box-shadow $t-base,
+        border-color $t-base;
+
+    &:hover {
+        transform: translateY(-5px);
+        border-color: rgba($accent, 0.4);
+        box-shadow:
+            0 12px 40px rgba(0,0,0,0.5),
+            0 0 0 1px rgba($accent, 0.15);
+    }
+
+    // ── Image area ──────────────────────────────────────────────────
+    &__img-container {
+        background: $surface-overlay;
+        padding: 0;
+        line-height: 0;
+        overflow: hidden;
+    }
+
+    &__img {
+        width: 100%;
+        height: 22rem;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease;
+
+        .image-card:hover & { transform: scale(1.03); }
+    }
+
+    // ── Footer info ─────────────────────────────────────────────────
+    &__footer {
+        padding: 1.4rem 1.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    &__label {
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: $text-muted;
+    }
+
+    &__path {
+        font-size: 1.2rem;
+        line-height: 1.45;
+        color: $text-secondary;
+        word-break: break-all;
+        background: $surface-overlay;
+        padding: 0.6rem 1rem;
+        border-radius: $r-sm;
+        border: 1px solid $surface-border;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.8rem;
+
+        &-btn {
+            flex-shrink: 0;
+            margin-top: -0.2rem;
+        }
+    }
+
+    // ── Confidence badge ────────────────────────────────────────────
+    &__score {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1rem;
+        background: rgba($accent, 0.07);
+        border-radius: $r-sm;
+        border: 1px solid rgba($accent, 0.18);
+    }
+
+    &__score-label {
+        font-size: 1.1rem;
+        color: $text-secondary;
+    }
+
+    &__score-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: $color-green;
+        letter-spacing: 0.01em;
+        line-height: 1;
+    }
+}
+
+// ── Loading overlay ─────────────────────────────────────────────────────
+.loading-box {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .p-progressspinner {
+        width: 48px !important;
+        height: 48px !important;
+    }
+}

@@ -1,0 +1,108 @@
+// ═══════════════════════════════════════════════════════════════════════
+// IMAGE-SEARCH PAGE
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── Step panel loading overlay ────────────────────────────────────────
+.loading-box {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 50;
+    border-radius: $r-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .p-progressspinner { width: 48px !important; height: 48px !important; }
+}
+
+// ── Lock stepper panels to fixed height so switching never causes jump ─
+::ng-deep .p-step-panels {
+    min-height: 34rem !important;
+}
+::ng-deep .p-step-panel {
+    padding: 0 !important;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// UNIFIED STEP FORM — one block, same size for every step
+// ═══════════════════════════════════════════════════════════════════════
+.step-form {
+    width: 52rem;
+    max-width: 100%;
+    margin: 2.4rem auto 0;
+    padding: 3.2rem;
+
+    background: $surface-overlay;
+    border: 1px solid $surface-border;
+    border-radius: $r-lg;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+
+    display: flex;
+    flex-direction: column;
+
+    // ── Label ─────────────────────────────────────────────────────
+    &__lbl {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: $text-secondary;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.7rem;
+        margin-top: 1.8rem;
+
+        &:first-child { margin-top: 0; }
+    }
+
+    // ── Text input ────────────────────────────────────────────────
+    &__input {
+        width: 100% !important;
+    }
+
+    // ── Select dropdown ───────────────────────────────────────────
+    &__select {
+        width: 100% !important;
+    }
+
+    // ── Primary CTA button ────────────────────────────────────────
+    &__action-btn {
+        margin-top: 2rem;
+
+        .p-button { width: 100% !important; }
+    }
+
+    // ── Nav footer — Back / Next ──────────────────────────────────
+    &__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 2.8rem;
+        padding-top: 2rem;
+        border-top: 1px solid $surface-border;
+
+        // Only one button → push it to the right
+        &--end { justify-content: flex-end; }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SEARCH RESULTS CARD
+// ═══════════════════════════════════════════════════════════════════════
+.search-card {
+    margin-top: 2.4rem;
+
+    &__heading {
+        font-size: 1.4rem;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: $text-secondary;
+    }
+
+    &__img-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2.4rem;
+        margin-top: 2rem;
+    }
+}
