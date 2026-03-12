@@ -2,9 +2,9 @@
   "version": "1.0.0",
   "release_notes": "See GitHub release notes for details",
   "windows": {
-    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.0.0/Visara-Windows.zip"
+    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.0.0/Visara-Windows.exe"
   },
   "macos": {
-    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.0.0/Visara-macOS.zip"
+    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.0.0/Visara-macOS"
   }
 }
