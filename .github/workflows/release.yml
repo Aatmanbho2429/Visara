@@ -53,7 +53,7 @@ jobs:
         run: |
           cd UI
           npm install
-          npm run build
+          npm run build:angular
 
       - name: Build Windows exe
         run: |
@@ -116,7 +116,7 @@ jobs:
         run: |
           cd UI
           npm install
-          npm run build
+          npm run build:angular
 
       - name: Build macOS app
         run: |
