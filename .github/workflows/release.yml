@@ -84,7 +84,7 @@ jobs:
 # BUILD MACOS
 # ══════════════════════════════════════════════════════════════════════
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13      # ← Intel x86_64 (macos-latest = ARM M1/M2)
 
     steps:
       - name: Checkout code
@@ -127,7 +127,6 @@ jobs:
           npm install
           npm run build:angular
 
-      # ── CHANGED — removed --onefile → proper .app bundle ──────────
       - name: Build macOS app
         run: |
           pyinstaller --name Visara \
@@ -146,7 +145,6 @@ jobs:
             --hidden-import requests \
             main.py
 
-      # ── CHANGED — proper signing + remove quarantine flag ──────────
       - name: Sign and remove quarantine
         run: |
           codesign --force --deep --sign - dist/Visara.app
