@@ -8,83 +8,10 @@ on:
 jobs:
 
 # ══════════════════════════════════════════════════════════════════════
-# BUILD WINDOWS
-# ══════════════════════════════════════════════════════════════════════
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: |
-          pip install pyinstaller
-          pip install pywebview
-          pip install requests
-          pip install cryptography
-          pip install pillow
-          pip install numpy
-          pip install faiss-cpu
-          pip install onnxruntime
-          pip install psd-tools
-          pip install onnx
-
-      - name: Download encrypted model using GitHub CLI
-        run: |
-          New-Item -ItemType Directory -Force -Path "models"
-          gh release download v1.0.0 --repo Aatmanbho2429/Visara --pattern "clip_vitb32.onnx.enc" --dir "models"
-          Write-Host "Model downloaded: $(Get-Item models/clip_vitb32.onnx.enc | Select-Object -ExpandProperty Length) bytes"
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build Angular
-        run: |
-          cd UI
-          npm install
-          npm run build:angular
-
-      - name: Build Windows exe
-        run: |
-          pyinstaller --name Visara `
-            --onefile `
-            --windowed `
-            --icon visara-logo.ico `
-            --add-data "UI/dist/vynce-standalone/browser;UI/dist/vynce-standalone/browser" `
-            --add-data "models;models" `
-            --add-data "visara-logo.ico;." `
-            --collect-all onnxruntime `
-            --collect-all pywebview `
-            --collect-all faiss `
-            --hidden-import PIL `
-            --hidden-import PIL._imagingtk `
-            --hidden-import psd_tools `
-            --hidden-import cryptography `
-            --hidden-import requests `
-            main.py
-
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Visara-Windows
-          path: dist/Visara.exe
-
-# ══════════════════════════════════════════════════════════════════════
 # BUILD MACOS
 # ══════════════════════════════════════════════════════════════════════
   build-macos:
-    runs-on: macos-12      # Intel x86_64 — works on all Macs via Rosetta 2
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
@@ -163,7 +90,7 @@ jobs:
 # CREATE RELEASE
 # ══════════════════════════════════════════════════════════════════════
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -187,9 +114,6 @@ jobs:
           {
             "version": "${VERSION}",
             "release_notes": "See GitHub release notes for details",
-            "windows": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.exe"
-            },
             "macos": {
               "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS.zip"
             }
@@ -210,7 +134,6 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: "Visara v${{ env.VERSION }}"
           files: |
-            Visara-Windows/Visara.exe
             Visara-macOS/Visara-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
