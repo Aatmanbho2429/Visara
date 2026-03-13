@@ -81,10 +81,10 @@ jobs:
           path: dist/Visara.exe
 
 # ══════════════════════════════════════════════════════════════════════
-# BUILD MACOS ARM (M1/M2/M3/M4)
+# BUILD MACOS UNIVERSAL (ARM + Intel in one build)
 # ══════════════════════════════════════════════════════════════════════
-  build-macos-arm:
-    runs-on: macos-latest   # ARM runner
+  build-macos:
+    runs-on: macos-latest   # ARM runner — supports universal2
 
     steps:
       - name: Checkout code
@@ -115,7 +115,8 @@ jobs:
       - name: Build Angular
         run: cd UI && npm install && npm run build:angular
 
-      - name: Build macOS ARM app
+      # ── universal2 = ARM + Intel combined in one .app ──────────────
+      - name: Build macOS Universal app
         run: |
           pyinstaller --name Visara \
             --windowed \
@@ -131,81 +132,29 @@ jobs:
             --hidden-import psd_tools \
             --hidden-import cryptography \
             --hidden-import requests \
-            --target-architecture arm64 \
+            --target-architecture universal2 \
             main.py
 
-      - name: Upload ARM binary
+      - name: Sign app + remove quarantine
+        run: |
+          codesign --force --deep --sign - dist/Visara.app
+          xattr -cr dist/Visara.app
+
+      - name: Zip macOS app
+        run: cd dist && zip -r ../Visara-macOS.zip Visara.app
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Visara-macOS-arm64
-          path: dist/Visara.app
+          name: Visara-macOS
+          path: Visara-macOS.zip
 
 # ══════════════════════════════════════════════════════════════════════
-# BUILD MACOS INTEL (x86_64)
-# ══════════════════════════════════════════════════════════════════════
-  build-macos-intel:
-    runs-on: macos-13   # Intel runner
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: |
-          pip install pyinstaller pywebview requests cryptography
-          pip install pillow numpy faiss-cpu onnxruntime psd-tools onnx
-
-      - name: Download encrypted model
-        run: |
-          mkdir -p models
-          gh release download v1.0.0 --repo Aatmanbho2429/Visara --pattern "clip_vitb32.onnx.enc" --dir "models"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build Angular
-        run: cd UI && npm install && npm run build:angular
-
-      - name: Build macOS Intel app
-        run: |
-          pyinstaller --name Visara \
-            --windowed \
-            --icon visara-logo.icns \
-            --add-data "UI/dist/vynce-standalone/browser:UI/dist/vynce-standalone/browser" \
-            --add-data "models:models" \
-            --add-data "visara-logo.icns:." \
-            --collect-all onnxruntime \
-            --collect-all pywebview \
-            --collect-all faiss \
-            --hidden-import PIL \
-            --hidden-import PIL._imagingtk \
-            --hidden-import psd_tools \
-            --hidden-import cryptography \
-            --hidden-import requests \
-            --target-architecture x86_64 \
-            main.py
-
-      - name: Upload Intel binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: Visara-macOS-x86_64
-          path: dist/Visara.app
-
-# ══════════════════════════════════════════════════════════════════════
-# MERGE INTO UNIVERSAL .app + CREATE RELEASE
+# CREATE RELEASE
 # ══════════════════════════════════════════════════════════════════════
   release:
-    needs: [build-windows, build-macos-arm, build-macos-intel]
-    runs-on: macos-latest
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
@@ -221,26 +170,6 @@ jobs:
 
       - name: Get version from tag
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-
-      - name: Merge ARM + Intel into Universal binary using lipo
-        run: |
-          ARM_BIN="Visara-macOS-arm64/Visara.app/Contents/MacOS/Visara"
-          X86_BIN="Visara-macOS-x86_64/Visara.app/Contents/MacOS/Visara"
-          OUT_APP="Visara-macOS-arm64/Visara.app/Contents/MacOS/Visara"
-
-          lipo -create -output "$OUT_BIN" "$ARM_BIN" "$X86_BIN"
-          echo "Universal binary created ✅"
-          lipo -info "$OUT_BIN"
-
-      - name: Sign and remove quarantine
-        run: |
-          codesign --force --deep --sign - Visara-macOS-arm64/Visara.app
-          xattr -cr Visara-macOS-arm64/Visara.app
-
-      - name: Zip universal macOS app
-        run: |
-          cd Visara-macOS-arm64
-          zip -r ../Visara-macOS.zip Visara.app
 
       - name: Update version.json
         run: |
@@ -265,13 +194,13 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: update version.json to v${VERSION}"
           git push origin main
 
-      - name: Upload files to existing release
+      - name: Upload files to release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.VERSION }}
           name: "Visara v${{ env.VERSION }}"
           files: |
             Visara-Windows/Visara.exe
-            Visara-macOS.zip
+            Visara-macOS/Visara-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
