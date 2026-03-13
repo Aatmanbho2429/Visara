@@ -81,10 +81,10 @@ jobs:
           path: dist/Visara.exe
 
 # ══════════════════════════════════════════════════════════════════════
-# BUILD MACOS UNIVERSAL (ARM + Intel in one build)
+# BUILD MACOS ARM — M1/M2/M3/M4
 # ══════════════════════════════════════════════════════════════════════
-  build-macos:
-    runs-on: macos-latest   # ARM runner — supports universal2
+  build-macos-arm:
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
@@ -115,8 +115,7 @@ jobs:
       - name: Build Angular
         run: cd UI && npm install && npm run build:angular
 
-      # ── universal2 = ARM + Intel combined in one .app ──────────────
-      - name: Build macOS Universal app
+      - name: Build macOS ARM app
         run: |
           pyinstaller --name Visara \
             --windowed \
@@ -132,28 +131,95 @@ jobs:
             --hidden-import psd_tools \
             --hidden-import cryptography \
             --hidden-import requests \
-            --target-architecture universal2 \
             main.py
 
-      - name: Sign app + remove quarantine
+      - name: Sign + remove quarantine
         run: |
           codesign --force --deep --sign - dist/Visara.app
           xattr -cr dist/Visara.app
 
-      - name: Zip macOS app
-        run: cd dist && zip -r ../Visara-macOS.zip Visara.app
+      - name: Zip ARM app
+        run: cd dist && zip -r ../Visara-macOS-Apple-Silicon.zip Visara.app
 
-      - name: Upload macOS artifact
+      - name: Upload ARM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Visara-macOS
-          path: Visara-macOS.zip
+          name: Visara-macOS-ARM
+          path: Visara-macOS-Apple-Silicon.zip
+
+# ══════════════════════════════════════════════════════════════════════
+# BUILD MACOS INTEL — 2019 and older Macs
+# ══════════════════════════════════════════════════════════════════════
+  build-macos-intel:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11 x86_64
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+
+      - name: Install Python dependencies (Intel via Rosetta)
+        run: |
+          arch -x86_64 pip install pyinstaller pywebview requests cryptography
+          arch -x86_64 pip install pillow numpy faiss-cpu onnxruntime psd-tools onnx
+
+      - name: Download encrypted model
+        run: |
+          mkdir -p models
+          gh release download v1.0.0 --repo Aatmanbho2429/Visara --pattern "clip_vitb32.onnx.enc" --dir "models"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Angular
+        run: cd UI && npm install && npm run build:angular
+
+      - name: Build macOS Intel app
+        run: |
+          arch -x86_64 pyinstaller --name Visara \
+            --windowed \
+            --icon visara-logo.icns \
+            --add-data "UI/dist/vynce-standalone/browser:UI/dist/vynce-standalone/browser" \
+            --add-data "models:models" \
+            --add-data "visara-logo.icns:." \
+            --collect-all onnxruntime \
+            --collect-all pywebview \
+            --collect-all faiss \
+            --hidden-import PIL \
+            --hidden-import PIL._imagingtk \
+            --hidden-import psd_tools \
+            --hidden-import cryptography \
+            --hidden-import requests \
+            main.py
+
+      - name: Sign + remove quarantine
+        run: |
+          codesign --force --deep --sign - dist/Visara.app
+          xattr -cr dist/Visara.app
+
+      - name: Zip Intel app
+        run: cd dist && zip -r ../Visara-macOS-Intel.zip Visara.app
+
+      - name: Upload Intel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Visara-macOS-Intel
+          path: Visara-macOS-Intel.zip
 
 # ══════════════════════════════════════════════════════════════════════
 # CREATE RELEASE
 # ══════════════════════════════════════════════════════════════════════
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos-arm, build-macos-intel]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -180,8 +246,11 @@ jobs:
             "windows": {
               "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-Windows.exe"
             },
-            "macos": {
-              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS.zip"
+            "macos_arm": {
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS-Apple-Silicon.zip"
+            },
+            "macos_intel": {
+              "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v${VERSION}/Visara-macOS-Intel.zip"
             }
           }
           EOF
@@ -201,6 +270,7 @@ jobs:
           name: "Visara v${{ env.VERSION }}"
           files: |
             Visara-Windows/Visara.exe
-            Visara-macOS/Visara-macOS.zip
+            Visara-macOS-ARM/Visara-macOS-Apple-Silicon.zip
+            Visara-macOS-Intel/Visara-macOS-Intel.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
