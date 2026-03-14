@@ -2,6 +2,7 @@ import json
 import os
 import platform
 import subprocess
+import webview
 from app.config import IMAGE_EXTENSIONS_FOR_FILE
 from app.core.progress import get_progress
 from app.services import search_service, sync_service
@@ -27,7 +28,7 @@ class Api:
             "Image Files (*.jpg;*.jpeg;*.png;*.tiff;*.tif;*.bmp;*.webp;*.psd;*.psb)",
         )
         result = _window.create_file_dialog(
-            dialog_type=10,          # OPEN_DIALOG
+            dialog_type=webview.OPEN_DIALOG,          # OPEN_DIALOG
             allow_multiple=False,
             file_types=file_types
         )
@@ -40,7 +41,7 @@ class Api:
         if _window is None:
             return ""
         result = _window.create_file_dialog(
-            dialog_type=50           # FOLDER_DIALOG
+            dialog_type=webview.FOLDER_DIALOG           # FOLDER_DIALOG
         )
         if result and len(result) > 0:
             return result[0]
