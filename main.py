@@ -72,14 +72,12 @@ window.events.loaded += on_loaded
 if SYSTEM == "Windows":
     webview.start(
         gui="edgechromium",
-        debug=True,
         http_server=True,
         private_mode=False,
         args=["--allow-file-access-from-files", "--disable-web-security"]
     )
 else:
     webview.start(
-        debug=True,
         http_server=True,
         private_mode=False
     )
