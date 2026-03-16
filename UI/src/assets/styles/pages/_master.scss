@@ -1,0 +1,438 @@
+// ── Login Overlay ─────────────────────────────────────────────────────────────
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    background: #0f1117;
+}
+
+// ── Animated background circles ───────────────────────────────────────────────
+.login-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+
+    &__circle {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.18;
+        animation: float 8s ease-in-out infinite;
+
+        &--1 {
+            width: 500px;
+            height: 500px;
+            background: #4f46e5;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        &--2 {
+            width: 400px;
+            height: 400px;
+            background: #0ea5e9;
+            bottom: -80px;
+            right: -80px;
+            animation-delay: -3s;
+        }
+
+        &--3 {
+            width: 300px;
+            height: 300px;
+            background: #8b5cf6;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -6s;
+        }
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%       { transform: translateY(-30px) scale(1.05); }
+}
+
+// ── Login Card ────────────────────────────────────────────────────────────────
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &--success {
+        padding: 48px 36px;
+    }
+
+    &__brand {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    &__icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+
+        i {
+            font-size: 22px;
+            color: #fff;
+        }
+    }
+
+    &__title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 6px;
+        letter-spacing: -0.5px;
+    }
+
+    &__subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.45);
+        margin: 0;
+    }
+
+    &__footer {
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.35);
+        margin: 20px 0 0;
+
+        a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover { color: #fff; }
+        }
+    }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Login Fields ──────────────────────────────────────────────────────────────
+.login-field {
+    margin-bottom: 16px;
+
+    &__label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 8px;
+    }
+
+    &__wrap {
+        position: relative;
+    }
+
+    &__icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+    }
+
+    &__input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 12px 14px 12px 40px;
+        font-size: 14px;
+        color: #fff;
+        outline: none;
+        transition: border-color 0.2s, background 0.2s;
+        box-sizing: border-box;
+
+        &::placeholder { color: rgba(255, 255, 255, 0.2); }
+
+        &:focus {
+            border-color: rgba(79, 70, 229, 0.7);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+// ── Error ─────────────────────────────────────────────────────────────────────
+.login-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    animation: shake 0.3s ease;
+
+    i {
+        font-size: 14px;
+        color: #f87171;
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+
+    span {
+        font-size: 13px;
+        color: #fca5a5;
+        line-height: 1.4;
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%       { transform: translateX(-6px); }
+    75%       { transform: translateX(6px); }
+}
+
+// ── Submit Button ─────────────────────────────────────────────────────────────
+.login-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+    margin-top: 4px;
+
+    &:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    &__text, &__spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+}
+
+// ── Success State ─────────────────────────────────────────────────────────────
+.login-success {
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+
+    &__icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+        i {
+            font-size: 26px;
+            color: #fff;
+        }
+    }
+
+    &__heading {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 8px;
+    }
+
+    &__message {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.45);
+        margin: 0 0 28px;
+    }
+
+    &__bar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4f46e5, #10b981);
+        border-radius: 4px;
+        animation: loadBar 1.5s ease forwards;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popIn {
+    0%   { transform: scale(0); opacity: 0; }
+    70%  { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes loadBar {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+// ── Keep existing license-card styles for any other usage ────────────────────
+.license-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+.license-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 36px 32px;
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+    text-align: center;
+
+    &__icon {
+        width: 56px;
+        height: 56px;
+        background: #fee2e2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+
+        i { font-size: 24px; color: #ef4444; }
+    }
+
+    &__heading {
+        font-size: 20px;
+        font-weight: 700;
+        color: #111;
+        margin: 0 0 10px;
+    }
+
+    &__message {
+        font-size: 14px;
+        color: #555;
+        margin: 0 0 16px;
+        line-height: 1.5;
+    }
+
+    &__code {
+        display: inline-block;
+        background: #f3f4f6;
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 20px;
+    }
+
+    &__device {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    &__device-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+    }
+
+    &__device-id {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+
+        code {
+            font-size: 11px;
+            color: #333;
+            word-break: break-all;
+            font-family: monospace;
+            line-height: 1.4;
+        }
+    }
+
+    &__device-hint {
+        display: block;
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 6px;
+    }
+
+    &__footer {
+        border-top: 1px solid #f0f0f0;
+        padding-top: 16px;
+        margin-top: 4px;
+    }
+
+    &__contact {
+        font-size: 13px;
+        color: #888;
+        margin: 0;
+    }
+}

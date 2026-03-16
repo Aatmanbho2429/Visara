@@ -2,58 +2,58 @@ import json
 import os
 import platform
 import subprocess
-import tkinter as tk                                          # ← NEW
-from tkinter import filedialog
+import webview
 from app.config import IMAGE_EXTENSIONS_FOR_FILE
 from app.core.progress import get_progress
-from app.services import search_service, sync_service        # ← removed license_service
+from app.services import search_service, sync_service
 from app.services import folder_status_service
-from app.services import auth_service, updater_service       # ← NEW
+from app.services import auth_service, updater_service
 from app.core import database as db
 
+# ── pywebview window reference — set from main.py after window is created ──
+_window = None
 
-# ── NEW — fixes tkinter dialog crash/hide on macOS ────────────────────
-def _make_tk_root():
-    root = tk.Tk()
-    root.withdraw()
-    root.wm_attributes("-topmost", True)
-    if platform.system() == "Darwin":
-        root.lift()
-        root.focus_force()
-    return root
+def set_window(win):
+    global _window
+    _window = win
 
 
 class Api:
 
-    # ── CHANGED — added _make_tk_root() so dialog shows on macOS too ──
+    # ── selectFile — uses pywebview native dialog (no tkinter, no crash) ──
     def selectFile(self):
-        root   = _make_tk_root()
-        result = filedialog.askopenfilename(
-            title="Select an image",
-            filetypes=(
-                ("Image files", IMAGE_EXTENSIONS_FOR_FILE),
-                ("All files", "*.*")
-            )
+        if _window is None:
+            return ""
+        file_types = (
+            "Image Files (*.jpg;*.jpeg;*.png;*.tiff;*.tif;*.bmp;*.webp;*.psd;*.psb)",
         )
-        root.destroy()
-        return result
+        result = _window.create_file_dialog(
+            dialog_type=webview.OPEN_DIALOG,          # OPEN_DIALOG
+            allow_multiple=False,
+            file_types=file_types
+        )
+        if result and len(result) > 0:
+            return result[0]
+        return ""
 
-    # ── CHANGED — added _make_tk_root() so dialog shows on macOS too ──
+    # ── selectFolder — uses pywebview native dialog (no tkinter, no crash) ──
     def selectFolder(self):
-        root   = _make_tk_root()
-        result = filedialog.askdirectory(title="Select a folder")
-        root.destroy()
-        return result
+        if _window is None:
+            return ""
+        result = _window.create_file_dialog(
+            dialog_type=webview.FOLDER_DIALOG           # FOLDER_DIALOG
+        )
+        if result and len(result) > 0:
+            return result[0]
+        return ""
 
-    # ── REMOVED validateLicense() ─────────────────────────────────────
-    # ── NEW auth methods below replace it ─────────────────────────────
+    # ── Auth ───────────────────────────────────────────────────────────────
 
     def login(self, email: str, password: str):
         result = auth_service.login(email, password)
         return json.dumps(result.to_dict())
 
     def validateLogin(self):
-        """Called on app start — checks saved token and loads model."""
         result = auth_service.validate_saved_token()
         return json.dumps(result.to_dict())
 
@@ -65,7 +65,8 @@ class Api:
         result = auth_service.request_device_reset(email, reason)
         return json.dumps(result)
 
-    # ── NEW update methods ─────────────────────────────────────────────
+    # ── Updates ────────────────────────────────────────────────────────────
+
     def checkForUpdate(self):
         result = updater_service.check_for_update()
         return json.dumps(result)
@@ -82,7 +83,7 @@ class Api:
         ).start()
         return json.dumps({"success": True, "message": "Downloading..."})
 
-    # ── Everything below is exactly the same as your original ──────────
+    # ── Search & Sync ──────────────────────────────────────────────────────
 
     def start_search(self, query_image: str, folder_path: str, top_k):
         return search_service.search(query_image, folder_path, int(top_k))
@@ -109,8 +110,6 @@ class Api:
         return json.dumps(folder_status_service.get_folder_statuses())
 
     def sync_folder(self, folder_path: str):
-        """Index all unindexed images in folder without running a search."""
-        import json
         from app.services.sync_service import sync_folder
         from app.core import indexer
         from app.services.search_service import BaseResponse
@@ -129,11 +128,6 @@ class Api:
         return json.dumps(response.__dict__, indent=2)
 
     def get_thumbnail(self, path: str) -> str:
-        """
-        Converts any image (PSB, TIFF, JPG, PNG) to a base64 JPEG data URL.
-        Called by Angular to display images that browsers can't open directly.
-        Returns: "data:image/jpeg;base64,/9j/4AAQ..." or "error" on failure.
-        """
         import base64
         import io
         from app.utils.image_loader import load_image_fast
@@ -146,7 +140,6 @@ class Api:
             b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
             return f"data:image/jpeg;base64,{b64}"
         except Exception as e:
-            # print(f"[thumbnail] failed for {path}: {e}", flush=True)
             return "error"
 
     def getDeviceId(self):
@@ -154,7 +147,6 @@ class Api:
         return get_device_id()
 
     def get_activity_log(self):
-        """Returns last 30 days of search + sync activity from the DB."""
         con = db.get_connection()
         try:
             entries = db.get_activity_log(con)

@@ -26,17 +26,21 @@ export class Master implements OnInit {
   public deviceId: string = '';
 
   // ── NEW — login form fields ──────────────────────────────────────────
-  public loginEmail:    string  = '';
-  public loginPassword: string  = '';
-  public loginLoading:  boolean = false;
-  public loginError:    string  = '';
+  public loginEmail: string = '';
+  public loginPassword: string = '';
+  public loginLoading: boolean = false;
+  public loginError: string = '';
 
+  public loginSuccess: boolean = false;
+  public loginFirstName: string = '';
+
+  public email: string = 'aatmanbhoraniya12@gmail.com';
   isSidebarCollapsed = false;
 
   menuItems: MenuItem[] = [
-    { label: 'Dashboard', icon: 'pi pi-home',  routerLink: '/image' },
-    { label: 'Users',     icon: 'pi pi-users', routerLink: '/users' },
-    { label: 'Settings',  icon: 'pi pi-cog',   routerLink: '/'      }
+    { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/image' },
+    { label: 'Users', icon: 'pi pi-users', routerLink: '/users' },
+    { label: 'Settings', icon: 'pi pi-cog', routerLink: '/' }
   ];
 
   constructor(
@@ -54,24 +58,24 @@ export class Master implements OnInit {
   // ── CHANGED — was validateLicense(), now checks saved JWT token ──────
   async validateLogin() {
     try {
-      const raw      = await this.electronServiceCustom.validateLogin();
+      const raw = await this.electronServiceCustom.validateLogin();
       const response = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
       if (response.success) {
         // Token valid — user is logged in, show main app
         this.isLoginRequired = false;
-        this.verifyLicenseResponse.success    = true;
+        this.verifyLicenseResponse.success = true;
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
-        this.verifyLicenseResponse.email      = response.user?.email || '';
+        this.verifyLicenseResponse.email = response.user?.email || '';
       } else {
         // No token or expired — show login screen
         this.isLoginRequired = true;
-        this.loginError      = '';
+        this.loginError = '';
       }
 
     } catch {
       this.isLoginRequired = true;
-      this.loginError      = 'Connection error. Please try again.';
+      this.loginError = 'Connection error. Please try again.';
     }
 
     this.cdr.markForCheck();
@@ -85,18 +89,18 @@ export class Master implements OnInit {
     }
 
     this.loginLoading = true;
-    this.loginError   = '';
+    this.loginError = '';
 
     try {
-      const raw      = await this.electronServiceCustom.login(this.loginEmail, this.loginPassword);
+      const raw = await this.electronServiceCustom.login(this.loginEmail, this.loginPassword);
       const response = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
       if (response.success) {
         // Login successful — hide login screen, show main app
         this.isLoginRequired = false;
-        this.verifyLicenseResponse.success    = true;
+        this.verifyLicenseResponse.success = true;
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
-        this.verifyLicenseResponse.email      = response.user?.email || '';
+        this.verifyLicenseResponse.email = response.user?.email || '';
         this.loginPassword = '';   // clear password from memory
       } else {
         this.loginError = response.message || 'Login failed. Please try again.';
@@ -114,9 +118,9 @@ export class Master implements OnInit {
   async logout() {
     await this.electronServiceCustom.logout();
     this.isLoginRequired = true;
-    this.loginEmail      = '';
-    this.loginPassword   = '';
-    this.loginError      = '';
+    this.loginEmail = '';
+    this.loginPassword = '';
+    this.loginError = '';
     this.cdr.markForCheck();
   }
 
@@ -127,7 +131,7 @@ export class Master implements OnInit {
       return;
     }
     try {
-      const raw    = await this.electronServiceCustom.requestDeviceReset(
+      const raw = await this.electronServiceCustom.requestDeviceReset(
         this.loginEmail, 'User requested device reset'
       );
       const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
