@@ -1,4 +1,6 @@
 import os
+from unittest import result
+from urllib import response
 import requests
 from app.config import SUPABASE_EDGE, TOKEN_FILE
 from app.services.license_service import get_device_id
@@ -24,7 +26,7 @@ def login(email: str, password: str) -> AuthResponse:
     resp = AuthResponse()
     try:
         r = requests.post(
-            f"{SUPABASE_EDGE}/login-user",
+            f"{SUPABASE_EDGE}/login-user-test",
             json={
                 "email":     email,
                 "password":  password,
@@ -73,7 +75,7 @@ def validate_saved_token() -> AuthResponse:
             token = f.read().strip()
 
         r = requests.get(
-            f"{SUPABASE_EDGE}/validate-token",
+            f"{SUPABASE_EDGE}/validate-token-test",
             headers={
                 "Authorization": f"Bearer {token}",
                 "x-device-id":   get_device_id()
