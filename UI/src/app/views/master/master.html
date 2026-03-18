@@ -47,8 +47,10 @@
 
 </div>
 
-<!-- ── Login Overlay ──────────────────────────────────────────────────────── -->
-<div class="login-overlay" *ngIf="isLoginRequired">
+<!-- ══════════════════════════════════════════════════════════════════════
+     LOGIN OVERLAY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="login-overlay" *ngIf="isLoginRequired && !showRegister">
     <div class="login-bg">
         <div class="login-bg__circle login-bg__circle--1"></div>
         <div class="login-bg__circle login-bg__circle--2"></div>
@@ -69,10 +71,9 @@
             </div>
         </div>
 
-        <!-- ── Login State ── -->
+        <!-- ── Login Form ── -->
         <ng-container *ngIf="!loginSuccess">
 
-            <!-- Logo / Icon -->
             <div class="login-card__brand">
                 <div class="login-card__icon">
                     <i class="pi pi-th-large"></i>
@@ -81,7 +82,6 @@
                 <p class="login-card__subtitle">Sign in to continue</p>
             </div>
 
-            <!-- Email -->
             <div class="login-field">
                 <label class="login-field__label">Email</label>
                 <div class="login-field__wrap">
@@ -93,12 +93,10 @@
                         [(ngModel)]="loginEmail"
                         [disabled]="loginLoading"
                         (keyup.enter)="submitLogin()"
-                        autocomplete="email"
-                    />
+                        autocomplete="email" />
                 </div>
             </div>
 
-            <!-- Password -->
             <div class="login-field">
                 <label class="login-field__label">Password</label>
                 <div class="login-field__wrap">
@@ -110,18 +108,15 @@
                         [(ngModel)]="loginPassword"
                         [disabled]="loginLoading"
                         (keyup.enter)="submitLogin()"
-                        autocomplete="current-password"
-                    />
+                        autocomplete="current-password" />
                 </div>
             </div>
 
-            <!-- Error -->
             <div class="login-error" *ngIf="loginError">
                 <i class="pi pi-exclamation-circle"></i>
                 <span>{{ loginError }}</span>
             </div>
 
-            <!-- Submit -->
             <button
                 class="login-btn"
                 [class.login-btn--loading]="loginLoading"
@@ -135,13 +130,192 @@
                 </span>
             </button>
 
-            <!-- Footer -->
             <p class="login-card__footer">
-                Having trouble?
-                <a href="mailto:{{ email }}">Contact support</a>
+                New to Visara?
+                <a href="javascript:void(0)" (click)="openRegister()">Request Access</a>
             </p>
 
         </ng-container>
+    </div>
+</div>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     REGISTER OVERLAY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="login-overlay" *ngIf="isLoginRequired && showRegister">
+    <div class="login-bg">
+        <div class="login-bg__circle login-bg__circle--1"></div>
+        <div class="login-bg__circle login-bg__circle--2"></div>
+        <div class="login-bg__circle login-bg__circle--3"></div>
+    </div>
+
+    <div class="login-card register-card">
+
+        <!-- ── Success State ── -->
+        <div class="login-success" *ngIf="registerSuccess">
+            <div class="login-success__icon" style="background: rgba(79,70,229,0.15);">
+                <i class="pi pi-send" style="color: #818cf8;"></i>
+            </div>
+            <h3 class="login-success__heading">Request Sent!</h3>
+            <p class="login-success__message">
+                Thank you for registering. Your account will be activated soon.
+                We'll reach out at <strong>{{ registerForm.email }}</strong>.
+            </p>
+            <button class="login-btn" style="margin-top: 24px;" (click)="closeRegister()">
+                <span class="login-btn__text">
+                    <i class="pi pi-arrow-left"></i> Back to Sign In
+                </span>
+            </button>
+        </div>
+
+        <!-- ── Register Form ── -->
+        <ng-container *ngIf="!registerSuccess">
+
+            <div class="login-card__brand">
+                <div class="login-card__icon">
+                    <i class="pi pi-user-plus"></i>
+                </div>
+                <h2 class="login-card__title">Request Access</h2>
+                <p class="login-card__subtitle">Fill your details — we'll activate your account</p>
+            </div>
+
+            <!-- First + Last Name -->
+            <div class="register-row">
+                <div class="login-field">
+                    <label class="login-field__label">First Name <span class="req">*</span></label>
+                    <div class="login-field__wrap">
+                        <i class="pi pi-user login-field__icon"></i>
+                        <input class="login-field__input" type="text" placeholder="John"
+                            [(ngModel)]="registerForm.first_name"
+                            [disabled]="registerLoading" />
+                    </div>
+                </div>
+                <div class="login-field">
+                    <label class="login-field__label">Last Name <span class="req">*</span></label>
+                    <div class="login-field__wrap">
+                        <i class="pi pi-user login-field__icon"></i>
+                        <input class="login-field__input" type="text" placeholder="Doe"
+                            [(ngModel)]="registerForm.last_name"
+                            [disabled]="registerLoading" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="login-field">
+                <label class="login-field__label">Email <span class="req">*</span></label>
+                <div class="login-field__wrap">
+                    <i class="pi pi-envelope login-field__icon"></i>
+                    <input class="login-field__input" type="email" placeholder="you@company.com"
+                        [(ngModel)]="registerForm.email"
+                        [disabled]="registerLoading" />
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div class="login-field">
+                <label class="login-field__label">Phone Number</label>
+                <div class="login-field__wrap">
+                    <i class="pi pi-phone login-field__icon"></i>
+                    <input class="login-field__input" type="tel" placeholder="+91 98765 43210"
+                        [(ngModel)]="registerForm.phone_number"
+                        [disabled]="registerLoading" />
+                </div>
+            </div>
+
+            <!-- Company -->
+            <div class="login-field">
+                <label class="login-field__label">Company Name</label>
+                <div class="login-field__wrap">
+                    <i class="pi pi-building login-field__icon"></i>
+                    <input class="login-field__input" type="text" placeholder="Acme Tiles Pvt. Ltd."
+                        [(ngModel)]="registerForm.company_name"
+                        [disabled]="registerLoading" />
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="login-field">
+                <label class="login-field__label">Password <span class="req">*</span></label>
+                <div class="login-field__wrap">
+                    <i class="pi pi-lock login-field__icon"></i>
+                    <input
+                        class="login-field__input"
+                        [class.login-field__input--error]="registerForm.password && registerForm.password.length < 8"
+                        type="password"
+                        placeholder="Min. 8 characters"
+                        [(ngModel)]="registerForm.password"
+                        [disabled]="registerLoading" />
+                </div>
+                <!-- Password strength hint -->
+                <div class="password-hint" *ngIf="registerForm.password">
+                    <div class="password-strength">
+                        <div class="password-strength__bar"
+                             [class.password-strength__bar--weak]="passwordStrength === 'weak'"
+                             [class.password-strength__bar--medium]="passwordStrength === 'medium'"
+                             [class.password-strength__bar--strong]="passwordStrength === 'strong'">
+                        </div>
+                    </div>
+                    <span class="password-strength__label"
+                          [class.text-red]="passwordStrength === 'weak'"
+                          [class.text-yellow]="passwordStrength === 'medium'"
+                          [class.text-green]="passwordStrength === 'strong'">
+                        {{ passwordStrength | titlecase }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="login-field">
+                <label class="login-field__label">Confirm Password <span class="req">*</span></label>
+                <div class="login-field__wrap">
+                    <i class="pi pi-lock login-field__icon"></i>
+                    <input
+                        class="login-field__input"
+                        [class.login-field__input--error]="registerForm.confirm_password && registerForm.password !== registerForm.confirm_password"
+                        [class.login-field__input--success]="registerForm.confirm_password && registerForm.password === registerForm.confirm_password"
+                        type="password"
+                        placeholder="Re-enter password"
+                        [(ngModel)]="registerForm.confirm_password"
+                        [disabled]="registerLoading" />
+                    <!-- Match indicator -->
+                    <i class="pi login-field__check"
+                       [class.pi-check-circle]="registerForm.confirm_password && registerForm.password === registerForm.confirm_password"
+                       [class.pi-times-circle]="registerForm.confirm_password && registerForm.password !== registerForm.confirm_password"
+                       *ngIf="registerForm.confirm_password">
+                    </i>
+                </div>
+                <span class="field-error-msg"
+                      *ngIf="registerForm.confirm_password && registerForm.password !== registerForm.confirm_password">
+                    Passwords do not match
+                </span>
+            </div>
+
+            <!-- Error -->
+            <div class="login-error" *ngIf="registerError">
+                <i class="pi pi-exclamation-circle"></i>
+                <span>{{ registerError }}</span>
+            </div>
+
+            <!-- Submit -->
+            <button
+                class="login-btn"
+                [class.login-btn--loading]="registerLoading"
+                [disabled]="registerLoading"
+                (click)="submitRegister()">
+                <span class="login-btn__text" *ngIf="!registerLoading">
+                    <i class="pi pi-send"></i> Send Request
+                </span>
+                <span class="login-btn__spinner" *ngIf="registerLoading">
+                    <i class="pi pi-spin pi-spinner"></i> Sending...
+                </span>
+            </button>
+
+            <p class="login-card__footer">
+                Already have an account?
+                <a href="javascript:void(0)" (click)="closeRegister()">Sign In</a>
+            </p>
+
+        </ng-container>
     </div>
 </div>
