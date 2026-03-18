@@ -50,6 +50,8 @@ export class Master implements OnInit, OnDestroy {
 
   // ── Update ────────────────────────────────────────────────────────────
   public showUpdateBanner:  boolean = false;
+  public showUpdatedBanner: boolean = false;   // shown after successful update
+  public updatedToVersion:  string  = '';
   public updateVersion:     string  = '';
   public updateUrl:         string  = '';
   public updateNotes:       string  = '';
@@ -73,7 +75,26 @@ export class Master implements OnInit, OnDestroy {
   ) { }
 
   async ngOnInit() {
-    setTimeout(() => { this.validateLogin(); }, 1000);
+    // ── Check if just updated — show success message ────────────────
+    setTimeout(async () => {
+      try {
+        const raw    = await this.electronServiceCustom.wasJustUpdated();
+        const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (result.updated) {
+          this.ngZone.run(() => {
+            this.showUpdatedBanner = true;
+            this.updatedToVersion  = result.version;
+            this.cdr.markForCheck();
+            // Auto-hide after 6 seconds
+            setTimeout(() => {
+              this.showUpdatedBanner = false;
+              this.cdr.markForCheck();
+            }, 6000);
+          });
+        }
+      } catch {}
+      this.validateLogin();
+    }, 1000);
   }
 
   // ── Password strength ─────────────────────────────────────────────────

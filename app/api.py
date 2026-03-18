@@ -232,3 +232,8 @@ class Api:
             return json.dumps(r.json())
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
+
+    def wasJustUpdated(self):
+        """Returns update info if app was just updated — only shows once."""
+        from app.services.updater_service import was_just_updated
+        return json.dumps(was_just_updated())

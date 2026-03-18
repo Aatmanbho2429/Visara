@@ -5,7 +5,10 @@ import requests
 import zipfile
 import tempfile
 import subprocess
-from app.config import APP_VERSION, VERSION_URL
+from app.config import APP_VERSION, VERSION_URL, DATA_DIR
+
+# ── Flag file written before update, read after relaunch ─────────────
+UPDATE_FLAG_FILE = os.path.join(DATA_DIR, ".visara_updated")
 
 
 def _parse_version(v):
@@ -23,7 +26,7 @@ def check_for_update() -> dict:
 
         if _parse_version(latest) > _parse_version(APP_VERSION):
             system  = platform.system()
-            machine = platform.machine()  # 'arm64' or 'x86_64'
+            machine = platform.machine()
 
             if system == "Windows":
                 url = data["windows"]["url"]
@@ -45,6 +48,32 @@ def check_for_update() -> dict:
         return {"available": False}
 
 
+def was_just_updated() -> dict:
+    """
+    Call this on app start — returns update info if app was just updated.
+    Deletes the flag file after reading so it only shows once.
+    """
+    if not os.path.exists(UPDATE_FLAG_FILE):
+        return {"updated": False}
+    try:
+        with open(UPDATE_FLAG_FILE, "r") as f:
+            version = f.read().strip()
+        os.remove(UPDATE_FLAG_FILE)   # ← delete so it only shows once
+        return {"updated": True, "version": version}
+    except Exception:
+        return {"updated": False}
+
+
+def _write_update_flag(version: str):
+    """Write flag file before exiting — read on next launch."""
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(UPDATE_FLAG_FILE, "w") as f:
+            f.write(version)
+    except Exception:
+        pass
+
+
 def download_and_install(url: str, version: str, progress_cb=None):
     system = platform.system()
     suffix = ".exe" if system == "Windows" else ".zip"
@@ -62,6 +91,9 @@ def download_and_install(url: str, version: str, progress_cb=None):
             if progress_cb and total:
                 progress_cb(int(done / total * 100))
 
+    # ── Write flag before exit ────────────────────────────────────────
+    _write_update_flag(version)
+
     if system == "Windows":
         _install_windows(tmp)
     elif system == "Darwin":
@@ -69,14 +101,9 @@ def download_and_install(url: str, version: str, progress_cb=None):
 
 
 def _install_windows(new_exe: str):
-    """
-    Visara.exe is a plain PyInstaller exe — not an InnoSetup installer.
-    We replace the current exe using a batch script that runs after app exits.
-    """
     current_exe = sys.executable if getattr(sys, "frozen", False) \
                   else os.path.abspath(sys.argv[0])
 
-    # Batch script: wait for app to exit → replace exe → relaunch
     script = f"""@echo off
 timeout /t 2 /nobreak >nul
 copy /y "{new_exe}" "{current_exe}"
@@ -87,7 +114,6 @@ del "%~f0"
     with open(script_path, "w") as f:
         f.write(script)
 
-    # Run batch detached then exit app
     subprocess.Popen(
         ["cmd.exe", "/c", script_path],
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
@@ -101,26 +127,20 @@ def _install_macos(zip_path: str):
 
     tmp_dir = tempfile.mkdtemp()
 
-    # ── Resolve current .app path safely ─────────────────────────────
     if getattr(sys, "frozen", False):
-        # Running as .app bundle: exe is inside Contents/MacOS/
         exe      = sys.executable
-        app_path = str(Path(exe).parent.parent.parent)  # → Visara.app
+        app_path = str(Path(exe).parent.parent.parent)
     else:
-        # Dev mode — not a bundle, skip
         print("[updater] macOS update skipped in dev mode", flush=True)
         return
 
-    # Safety check — must end with .app
     if not app_path.endswith(".app"):
         print(f"[updater] Unexpected app path: {app_path}", flush=True)
         return
 
-    # ── Extract zip ───────────────────────────────────────────────────
     with zipfile.ZipFile(zip_path, "r") as z:
         z.extractall(tmp_dir)
 
-    # ── Find .app inside extracted folder ─────────────────────────────
     new_app = next(
         (os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)
          if f.endswith(".app")),
@@ -130,9 +150,6 @@ def _install_macos(zip_path: str):
         print("[updater] No .app found in zip", flush=True)
         return
 
-    print(f"[updater] Replacing {app_path} with {new_app}", flush=True)
-
-    # ── Shell script: runs after app exits ────────────────────────────
     script = f"""#!/bin/bash
 sleep 2
 rm -rf "{app_path}"

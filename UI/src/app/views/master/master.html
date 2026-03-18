@@ -48,27 +48,57 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
+     UPDATED SUCCESS BANNER — shown once after successful update
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="update-banner update-banner--success" *ngIf="showUpdatedBanner">
+    <div class="update-banner__content">
+        <i class="pi pi-check-circle update-banner__icon"></i>
+        <div class="update-banner__text">
+            <strong>Successfully updated to v{{ updatedToVersion }}!</strong>
+            <span> — You're running the latest version of Visara.</span>
+        </div>
+        <button class="update-banner__dismiss" (click)="showUpdatedBanner = false">
+            <i class="pi pi-times"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
      UPDATE BANNER — shown after login if new version available
      ══════════════════════════════════════════════════════════════════════ -->
-<div class="update-banner" *ngIf="showUpdateBanner">
+<div class="update-banner" *ngIf="showUpdateBanner && !updateDownloading">
     <div class="update-banner__content">
         <i class="pi pi-arrow-circle-up update-banner__icon"></i>
         <div class="update-banner__text">
             <strong>Version {{ updateVersion }} is available!</strong>
             <span *ngIf="updateNotes"> — {{ updateNotes }}</span>
         </div>
-        <button class="update-banner__btn"
-                [disabled]="updateDownloading"
-                (click)="doUpdate()">
-            <i class="pi pi-spin pi-spinner" *ngIf="updateDownloading"></i>
-            <i class="pi pi-download"        *ngIf="!updateDownloading"></i>
-            {{ updateDownloading ? 'Downloading...' : 'Update Now' }}
+        <button class="update-banner__btn" (click)="doUpdate()">
+            <i class="pi pi-download"></i> Update Now
         </button>
-        <button class="update-banner__dismiss"
-                [disabled]="updateDownloading"
-                (click)="dismissUpdate()">
+        <button class="update-banner__dismiss" (click)="dismissUpdate()">
             <i class="pi pi-times"></i>
         </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     DOWNLOAD BLOCKER — full screen overlay while downloading
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="download-blocker" *ngIf="updateDownloading">
+    <div class="download-blocker__card">
+        <div class="download-blocker__spinner">
+            <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <h3 class="download-blocker__title">Updating Visara...</h3>
+        <p class="download-blocker__subtitle">
+            Downloading v{{ updateVersion }} — please wait.<br/>
+            The app will restart automatically when done.
+        </p>
+        <div class="download-blocker__warning">
+            <i class="pi pi-exclamation-triangle"></i>
+            Do not close the app
+        </div>
     </div>
 </div>
 
