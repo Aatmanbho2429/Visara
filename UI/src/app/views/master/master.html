@@ -48,6 +48,31 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
+     UPDATE BANNER — shown after login if new version available
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="update-banner" *ngIf="showUpdateBanner">
+    <div class="update-banner__content">
+        <i class="pi pi-arrow-circle-up update-banner__icon"></i>
+        <div class="update-banner__text">
+            <strong>Version {{ updateVersion }} is available!</strong>
+            <span *ngIf="updateNotes"> — {{ updateNotes }}</span>
+        </div>
+        <button class="update-banner__btn"
+                [disabled]="updateDownloading"
+                (click)="doUpdate()">
+            <i class="pi pi-spin pi-spinner" *ngIf="updateDownloading"></i>
+            <i class="pi pi-download"        *ngIf="!updateDownloading"></i>
+            {{ updateDownloading ? 'Downloading...' : 'Update Now' }}
+        </button>
+        <button class="update-banner__dismiss"
+                [disabled]="updateDownloading"
+                (click)="dismissUpdate()">
+            <i class="pi pi-times"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
      LOGIN OVERLAY
      ══════════════════════════════════════════════════════════════════════ -->
 <div class="login-overlay" *ngIf="isLoginRequired && !showRegister">
@@ -179,7 +204,6 @@
                 <p class="login-card__subtitle">Fill your details — we'll activate your account</p>
             </div>
 
-            <!-- First + Last Name -->
             <div class="register-row">
                 <div class="login-field">
                     <label class="login-field__label">First Name <span class="req">*</span></label>
@@ -201,7 +225,6 @@
                 </div>
             </div>
 
-            <!-- Email -->
             <div class="login-field">
                 <label class="login-field__label">Email <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -212,7 +235,6 @@
                 </div>
             </div>
 
-            <!-- Phone -->
             <div class="login-field">
                 <label class="login-field__label">Phone Number</label>
                 <div class="login-field__wrap">
@@ -223,7 +245,6 @@
                 </div>
             </div>
 
-            <!-- Company -->
             <div class="login-field">
                 <label class="login-field__label">Company Name</label>
                 <div class="login-field__wrap">
@@ -234,7 +255,6 @@
                 </div>
             </div>
 
-            <!-- Password -->
             <div class="login-field">
                 <label class="login-field__label">Password <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -247,7 +267,6 @@
                         [(ngModel)]="registerForm.password"
                         [disabled]="registerLoading" />
                 </div>
-                <!-- Password strength hint -->
                 <div class="password-hint" *ngIf="registerForm.password">
                     <div class="password-strength">
                         <div class="password-strength__bar"
@@ -265,7 +284,6 @@
                 </div>
             </div>
 
-            <!-- Confirm Password -->
             <div class="login-field">
                 <label class="login-field__label">Confirm Password <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -278,7 +296,6 @@
                         placeholder="Re-enter password"
                         [(ngModel)]="registerForm.confirm_password"
                         [disabled]="registerLoading" />
-                    <!-- Match indicator -->
                     <i class="pi login-field__check"
                        [class.pi-check-circle]="registerForm.confirm_password && registerForm.password === registerForm.confirm_password"
                        [class.pi-times-circle]="registerForm.confirm_password && registerForm.password !== registerForm.confirm_password"
@@ -291,13 +308,11 @@
                 </span>
             </div>
 
-            <!-- Error -->
             <div class="login-error" *ngIf="registerError">
                 <i class="pi pi-exclamation-circle"></i>
                 <span>{{ registerError }}</span>
             </div>
 
-            <!-- Submit -->
             <button
                 class="login-btn"
                 [class.login-btn--loading]="registerLoading"

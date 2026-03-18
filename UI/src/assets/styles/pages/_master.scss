@@ -440,6 +440,9 @@
 // ── Append to bottom of master.scss ──────────────────────────────────
 
 // Register card — scrollable for more fields
+// ── Append to bottom of master.scss ──────────────────────────────────
+
+// Register card — scrollable for more fields
 .register-card {
   max-height: 90vh;
   overflow-y: auto;
@@ -525,3 +528,71 @@
 .text-red    { color: #f87171; }
 .text-yellow { color: #fbbf24; }
 .text-green  { color: #34d399; }
+
+// ── Update banner ─────────────────────────────────────────────────────
+.update-banner {
+  position:   fixed;
+  top:        0;
+  left:       0;
+  right:      0;
+  z-index:    9999;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  padding:    10px 20px;
+  box-shadow: 0 2px 12px rgba(79,70,229,0.4);
+
+  &__content {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+    max-width:   1200px;
+    margin:      0 auto;
+  }
+
+  &__icon {
+    font-size:   18px;
+    color:       #fff;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    flex:      1;
+    color:     #fff;
+    font-size: 14px;
+
+    strong { font-weight: 700; }
+    span   { opacity: 0.85; }
+  }
+
+  &__btn {
+    display:       flex;
+    align-items:   center;
+    gap:           6px;
+    background:    #fff;
+    color:         #4f46e5;
+    border:        none;
+    border-radius: 8px;
+    padding:       7px 16px;
+    font-size:     13px;
+    font-weight:   600;
+    cursor:        pointer;
+    white-space:   nowrap;
+    transition:    opacity 0.2s;
+
+    &:disabled { opacity: 0.7; cursor: not-allowed; }
+    &:hover:not(:disabled) { opacity: 0.9; }
+  }
+
+  &__dismiss {
+    background:    none;
+    border:        none;
+    color:         rgba(255,255,255,0.7);
+    cursor:        pointer;
+    padding:       4px;
+    border-radius: 4px;
+    font-size:     14px;
+    flex-shrink:   0;
+
+    &:hover { color: #fff; }
+    &:disabled { cursor: not-allowed; }
+  }
+}

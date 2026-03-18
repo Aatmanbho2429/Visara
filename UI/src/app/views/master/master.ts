@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { PrimengComponentsModule } from '../../shared/primeng-components-module';
@@ -16,7 +16,7 @@ import { verifyLicenseResponse } from '../../models/response/verifyLicenseRespon
   templateUrl: './master.html',
   styleUrl:    './master.scss',
 })
-export class Master implements OnInit {
+export class Master implements OnInit, OnDestroy {
 
   items: MenuItem[] | undefined;
   public subscriptions = new Subscription();
@@ -48,6 +48,14 @@ export class Master implements OnInit {
     confirm_password: '',
   };
 
+  // ── Update ────────────────────────────────────────────────────────────
+  public showUpdateBanner:  boolean = false;
+  public updateVersion:     string  = '';
+  public updateUrl:         string  = '';
+  public updateNotes:       string  = '';
+  public updateDownloading: boolean = false;
+  private updateInterval: any = null;   // periodic check handle
+
   public email: string = 'aatmanbhoraniya12@gmail.com';
   isSidebarCollapsed = false;
 
@@ -71,7 +79,7 @@ export class Master implements OnInit {
   // ── Password strength ─────────────────────────────────────────────────
   get passwordStrength(): 'weak' | 'medium' | 'strong' {
     const p = this.registerForm.password;
-    if (!p || p.length < 8)  return 'weak';
+    if (!p || p.length < 8) return 'weak';
     const hasUpper   = /[A-Z]/.test(p);
     const hasLower   = /[a-z]/.test(p);
     const hasNumber  = /[0-9]/.test(p);
@@ -95,6 +103,8 @@ export class Master implements OnInit {
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
         this.verifyLicenseResponse.email      = response.user?.email      || '';
         this.userState.setUser(response.user);
+        this.checkForUpdate();                  // ← check on auto-login
+        this.startUpdatePolling();              // ← poll every 4 hours
       } else {
         this.isLoginRequired = true;
         this.loginError      = '';
@@ -121,6 +131,8 @@ export class Master implements OnInit {
         this.loginFirstName = response.user?.first_name || 'there';
         this.loginSuccess   = true;
         this.userState.setUser(response.user);
+        this.checkForUpdate();                  // ← check on manual login
+        this.startUpdatePolling();              // ← poll every 4 hours
         setTimeout(() => {
           this.isLoginRequired = false;
           this.loginSuccess    = false;
@@ -142,10 +154,12 @@ export class Master implements OnInit {
 
   async logout() {
     await this.electronServiceCustom.logout();
-    this.isLoginRequired = true;
-    this.loginEmail      = '';
-    this.loginPassword   = '';
-    this.loginError      = '';
+    this.isLoginRequired  = true;
+    this.loginEmail       = '';
+    this.loginPassword    = '';
+    this.loginError       = '';
+    this.showUpdateBanner = false;
+    this.stopUpdatePolling();
     this.userState.clear();
     this.cdr.markForCheck();
   }
@@ -173,7 +187,6 @@ export class Master implements OnInit {
   async submitRegister() {
     const f = this.registerForm;
 
-    // ── UI validations ────────────────────────────────────────────────
     if (!f.first_name.trim() || !f.last_name.trim()) {
       this.registerError = 'First name and last name are required.';
       return;
@@ -200,10 +213,8 @@ export class Master implements OnInit {
     this.cdr.markForCheck();
 
     try {
-      // ── Get device ID from Python ─────────────────────────────────
       const deviceId = await this.electronServiceCustom.getDeviceId();
 
-      // ── Call register-request via Python api ─────────────────────
       const result = await this.electronServiceCustom.registerRequest(
         f.first_name.trim(),
         f.last_name.trim(),
@@ -216,8 +227,7 @@ export class Master implements OnInit {
 
       this.ngZone.run(() => {
         if (result.success) {
-          this.registerSuccess = true;
-          // Clear sensitive data from memory
+          this.registerSuccess           = true;
           this.registerForm.password         = '';
           this.registerForm.confirm_password = '';
         } else {
@@ -234,6 +244,56 @@ export class Master implements OnInit {
         this.cdr.markForCheck();
       });
     }
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────
+
+  async checkForUpdate() {
+    try {
+      const raw    = await this.electronServiceCustom.checkForUpdate();
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (result.available) {
+        this.ngZone.run(() => {
+          this.showUpdateBanner = true;
+          this.updateVersion    = result.version;
+          this.updateUrl        = result.url;
+          this.updateNotes      = result.release_notes || '';
+          this.cdr.markForCheck();
+        });
+      }
+    } catch (e) {
+      console.log('[update] check failed:', e);
+    }
+  }
+
+  async doUpdate() {
+    this.updateDownloading = true;
+    this.cdr.markForCheck();
+    await this.electronServiceCustom.downloadUpdate(this.updateUrl, this.updateVersion);
+  }
+
+  dismissUpdate() {
+    this.showUpdateBanner = false;
+    this.cdr.markForCheck();
+  }
+
+  startUpdatePolling() {
+    this.stopUpdatePolling();                   // clear any existing
+    // Check every 4 hours (4 * 60 * 60 * 1000)
+    this.updateInterval = setInterval(() => {
+      this.checkForUpdate();
+    }, 4 * 60 * 60 * 1000);
+  }
+
+  stopUpdatePolling() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+      this.updateInterval = null;
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopUpdatePolling();
   }
 
   // ── Misc ──────────────────────────────────────────────────────────────
