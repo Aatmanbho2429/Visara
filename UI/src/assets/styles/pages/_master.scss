@@ -436,3 +436,92 @@
         margin: 0;
     }
 }
+
+// ── Append to bottom of master.scss ──────────────────────────────────
+
+// Register card — scrollable for more fields
+.register-card {
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+
+  &::-webkit-scrollbar       { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+}
+
+// Two-column row for first + last name
+.register-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+// Required asterisk
+.req {
+  color: #ef4444;
+  margin-left: 2px;
+  font-size: 12px;
+}
+
+// Password strength bar
+.password-hint {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  margin-top:  6px;
+}
+
+.password-strength {
+  flex:          1;
+  height:        4px;
+  background:    rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow:      hidden;
+
+  &__bar {
+    height:        100%;
+    border-radius: 2px;
+    transition:    width 0.3s, background 0.3s;
+
+    &--weak   { width: 33%;  background: #ef4444; }
+    &--medium { width: 66%;  background: #f59e0b; }
+    &--strong { width: 100%; background: #10b981; }
+  }
+
+  &__label {
+    font-size:   11px;
+    font-weight: 600;
+    min-width:   44px;
+  }
+}
+
+// Password match indicator icon
+.login-field__check {
+  position:   absolute;
+  right:      12px;
+  top:        50%;
+  transform:  translateY(-50%);
+  font-size:  14px;
+
+  &.pi-check-circle { color: #10b981; }
+  &.pi-times-circle { color: #ef4444; }
+}
+
+// Input error/success states
+.login-field__input--error   { border-color: #ef4444 !important; }
+.login-field__input--success { border-color: #10b981 !important; }
+
+// Field level error message
+.field-error-msg {
+  font-size:   11px;
+  color:       #f87171;
+  margin-top:  4px;
+  display:     block;
+  padding-left: 2px;
+}
+
+// Colour helpers
+.text-red    { color: #f87171; }
+.text-yellow { color: #fbbf24; }
+.text-green  { color: #34d399; }

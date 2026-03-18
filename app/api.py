@@ -210,3 +210,25 @@ class Api:
             return json.dumps(r.json())
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
+
+    def registerRequest(self, first_name: str, last_name: str, email: str,
+                        phone_number: str, company_name: str,
+                        password: str, device_id: str):
+        """Sends registration request email to admin via Supabase Edge Function."""
+        try:
+            r = requests.post(
+                f"{SUPABASE_EDGE}/register-request",
+                json={
+                    "first_name":   first_name,
+                    "last_name":    last_name,
+                    "email":        email,
+                    "phone_number": phone_number,
+                    "company_name": company_name,
+                    "password":     password,
+                    "device_id":    device_id,
+                },
+                timeout=15
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})

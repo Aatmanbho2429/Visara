@@ -107,6 +107,21 @@ export class ElectronServicesCustom {
     return typeof raw === 'string' ? JSON.parse(raw) : raw;
   }
 
+  async registerRequest(
+    first_name:   string,
+    last_name:    string,
+    email:        string,
+    phone_number: string,
+    company_name: string,
+    password:     string,
+    device_id:    string
+  ): Promise<any> {
+    const raw = await (window as any).pywebview.api.registerRequest(
+      first_name, last_name, email, phone_number, company_name, password, device_id
+    );
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
+
   async verifyPayment(
     razorpay_order_id:   string,
     razorpay_payment_id: string,
