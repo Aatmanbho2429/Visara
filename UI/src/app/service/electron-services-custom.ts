@@ -29,7 +29,7 @@ export class ElectronServicesCustom {
   }
 
   async getFolderTree(): Promise<any> {
-    let result = 2//await window.pywebview.api.getFolderTree();
+    let result = 2;
     return result;
   }
 
@@ -62,8 +62,7 @@ export class ElectronServicesCustom {
     return typeof raw === 'string' ? JSON.parse(raw) : raw;
   }
 
-  // ── REMOVED validateLicense() ────────────────────────────────────────
-  // ── NEW auth methods ─────────────────────────────────────────────────
+  // ── Auth ──────────────────────────────────────────────────────────────
 
   validateLogin(): Promise<string> {
     return (window as any).pywebview.api.validateLogin();
@@ -77,11 +76,11 @@ export class ElectronServicesCustom {
     return (window as any).pywebview.api.logout();
   }
 
-  requestDeviceReset(email: string, reason: string): Promise<string> {
-    return (window as any).pywebview.api.requestDeviceReset(email, reason);
-  }
+  // requestDeviceReset(email: string, reason: str): Promise<string> {
+  //   return (window as any).pywebview.api.requestDeviceReset(email, reason);
+  // }
 
-  // ── NEW update methods ────────────────────────────────────────────────
+  // ── Updates ───────────────────────────────────────────────────────────
 
   checkForUpdate(): Promise<string> {
     return (window as any).pywebview.api.checkForUpdate();
@@ -91,6 +90,39 @@ export class ElectronServicesCustom {
     return (window as any).pywebview.api.downloadUpdate(url, version);
   }
 
+  // ── Subscription ──────────────────────────────────────────────────────
+
+  async getPlans(): Promise<any> {
+    const raw = await (window as any).pywebview.api.getPlans();
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
+
+  async decrementSearch(user_id: string): Promise<any> {
+    const raw = await (window as any).pywebview.api.decrementSearch(user_id);
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
+
+  async createOrder(user_id: string, plan_id: string): Promise<any> {
+    const raw = await (window as any).pywebview.api.createOrder(user_id, plan_id);
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
+
+  async verifyPayment(
+    razorpay_order_id:   string,
+    razorpay_payment_id: string,
+    razorpay_signature:  string,
+    user_id:             string,
+    plan_id:             string
+  ): Promise<any> {
+    const raw = await (window as any).pywebview.api.verifyPayment(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      user_id,
+      plan_id
+    );
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
 }
 
 declare global {

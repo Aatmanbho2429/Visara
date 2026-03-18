@@ -6,13 +6,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ElectronServicesCustom } from '../../service/electron-services-custom';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';                  // ← NEW
+import { FormsModule } from '@angular/forms';
 import { verifyLicenseResponse } from '../../models/response/verifyLicenseResponse';
 
 
 @Component({
   selector: 'app-master',
-  imports: [RouterOutlet, PrimengComponentsModule, TranslateModule, CommonModule, FormsModule], // ← added FormsModule
+  imports: [RouterOutlet, PrimengComponentsModule, TranslateModule, CommonModule, FormsModule],
   templateUrl: './master.html',
   styleUrl: './master.scss',
 })
@@ -20,17 +20,14 @@ export class Master implements OnInit {
   items: MenuItem[] | undefined;
   public subscriptions = new Subscription();
 
-  // ── CHANGED — renamed to isLoginRequired (was isLicenseInvalid) ─────
   public isLoginRequired: boolean = false;
   public verifyLicenseResponse: verifyLicenseResponse = new verifyLicenseResponse();
   public deviceId: string = '';
 
-  // ── NEW — login form fields ──────────────────────────────────────────
-  public loginEmail: string = '';
+  public loginEmail: string    = '';
   public loginPassword: string = '';
   public loginLoading: boolean = false;
-  public loginError: string = '';
-
+  public loginError: string    = '';
   public loginSuccess: boolean = false;
   public loginFirstName: string = '';
 
@@ -38,9 +35,9 @@ export class Master implements OnInit {
   isSidebarCollapsed = false;
 
   menuItems: MenuItem[] = [
-    { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/image' },
-    { label: 'Users', icon: 'pi pi-users', routerLink: '/users' },
-    { label: 'Settings', icon: 'pi pi-cog', routerLink: '/' }
+    { label: 'Dashboard', icon: 'pi pi-home',  routerLink: '/image' },
+    { label: 'Users',     icon: 'pi pi-users', routerLink: '/users' },
+    { label: 'Settings',  icon: 'pi pi-cog',   routerLink: '/'      }
   ];
 
   constructor(
@@ -50,27 +47,24 @@ export class Master implements OnInit {
   ) { }
 
   async ngOnInit() {
-    setTimeout(() => {
-      this.validateLogin();         // ← CHANGED from validateLicense()
-    }, 1000);
+    setTimeout(() => { this.validateLogin(); }, 1000);
   }
 
-  // ── CHANGED — was validateLicense(), now checks saved JWT token ──────
   async validateLogin() {
     try {
-      const raw = await this.electronServiceCustom.validateLogin();
+      const raw      = await this.electronServiceCustom.validateLogin();
       const response = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
       if (response.success) {
-        // Token valid — user is logged in, show main app
         this.isLoginRequired = false;
-        this.verifyLicenseResponse.success = true;
+        this.verifyLicenseResponse.success    = true;
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
-        this.verifyLicenseResponse.email = response.user?.email || '';
+        this.verifyLicenseResponse.email      = response.user?.email      || '';
+        // ── NEW — save user to sessionStorage ──────────────────────
+        sessionStorage.setItem('visara_user', JSON.stringify(response.user));
       } else {
-        // No token or expired — show login screen
         this.isLoginRequired = true;
-        this.loginError = '';
+        this.loginError      = '';
       }
 
     } catch {
@@ -81,7 +75,6 @@ export class Master implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // ── NEW — called when designer clicks Login button ───────────────────
   async submitLogin() {
     if (!this.loginEmail || !this.loginPassword) {
       this.loginError = 'Please enter your email and password.';
@@ -89,19 +82,20 @@ export class Master implements OnInit {
     }
 
     this.loginLoading = true;
-    this.loginError = '';
+    this.loginError   = '';
 
     try {
-      const raw = await this.electronServiceCustom.login(this.loginEmail, this.loginPassword);
+      const raw      = await this.electronServiceCustom.login(this.loginEmail, this.loginPassword);
       const response = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
       if (response.success) {
-        // Login successful — hide login screen, show main app
         this.isLoginRequired = false;
-        this.verifyLicenseResponse.success = true;
+        this.verifyLicenseResponse.success    = true;
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
-        this.verifyLicenseResponse.email = response.user?.email || '';
-        this.loginPassword = '';   // clear password from memory
+        this.verifyLicenseResponse.email      = response.user?.email      || '';
+        this.loginPassword = '';
+        // ── NEW — save user to sessionStorage ──────────────────────
+        sessionStorage.setItem('visara_user', JSON.stringify(response.user));
       } else {
         this.loginError = response.message || 'Login failed. Please try again.';
       }
@@ -114,35 +108,17 @@ export class Master implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // ── NEW — called from logout button ─────────────────────────────────
   async logout() {
     await this.electronServiceCustom.logout();
     this.isLoginRequired = true;
-    this.loginEmail = '';
-    this.loginPassword = '';
-    this.loginError = '';
+    this.loginEmail      = '';
+    this.loginPassword   = '';
+    this.loginError      = '';
+    // ── NEW — clear sessionStorage on logout ───────────────────────
+    sessionStorage.removeItem('visara_user');
     this.cdr.markForCheck();
   }
 
-  // ── NEW — request device reset ───────────────────────────────────────
-  async requestDeviceReset() {
-    if (!this.loginEmail) {
-      this.loginError = 'Please enter your email first.';
-      return;
-    }
-    try {
-      const raw = await this.electronServiceCustom.requestDeviceReset(
-        this.loginEmail, 'User requested device reset'
-      );
-      const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      this.loginError = result.message || 'Reset request sent. Contact support.';
-    } catch {
-      this.loginError = 'Could not send reset request.';
-    }
-    this.cdr.markForCheck();
-  }
-
-  // ── Kept exactly the same ────────────────────────────────────────────
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }

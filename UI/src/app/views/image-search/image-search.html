@@ -6,6 +6,17 @@
         <span>{{ "lblISEDescription" | translate }}</span>
     </h1>
 
+    <!-- ── Search counter badge ───────────────────────────────────────── -->
+    <div class="search-badge" *ngIf="subscriptionStatus === 'trial' && freeSearchesRemaining > 0">
+        <i class="pi pi-search"></i>
+        <span>{{ freeSearchesRemaining }} free search{{ freeSearchesRemaining === 1 ? '' : 'es' }} remaining</span>
+    </div>
+
+    <div class="search-badge search-badge--active" *ngIf="subscriptionStatus === 'active' && daysRemaining !== null">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ daysRemaining }} day{{ daysRemaining === 1 ? '' : 's' }} remaining</span>
+    </div>
+
     <!-- ── Stepper card ───────────────────────────────────────────────── -->
     <p-card class="page__card">
         <p-stepper [value]="currentStep" [linear]="true">
@@ -190,3 +201,69 @@
     </p-card>
 
 </section>
+
+<!-- ── Subscription Screen Overlay ───────────────────────────────────────── -->
+<div class="subscription-overlay" *ngIf="showSubscriptionScreen">
+    <div class="subscription-card">
+
+        <!-- Header -->
+        <div class="subscription-card__header">
+            <div class="subscription-card__icon">
+                <i class="pi pi-crown"></i>
+            </div>
+            <h2 class="subscription-card__title">
+                {{ subscriptionStatus === 'expired' ? 'Subscription Expired' : 'Upgrade to Continue' }}
+            </h2>
+            <p class="subscription-card__subtitle">
+                {{ subscriptionStatus === 'expired'
+                    ? 'Your subscription has ended. Renew to continue searching.'
+                    : 'You have used all your free searches. Choose a plan to continue.' }}
+            </p>
+        </div>
+
+        <!-- Plans -->
+        <div class="plans" *ngIf="plans.length > 0">
+            <div
+                class="plan-card"
+                *ngFor="let plan of plans"
+                [class.plan-card--selected]="selectedPlan?.id === plan.id"
+                (click)="selectedPlan = plan">
+                <div class="plan-card__name">{{ plan.name }}</div>
+                <div class="plan-card__price">
+                    <span class="plan-card__currency">₹</span>
+                    <span class="plan-card__amount">{{ plan.amount | number:'1.0-0' }}</span>
+                </div>
+                <div class="plan-card__duration">{{ plan.duration }} days</div>
+                <div class="plan-card__check" *ngIf="selectedPlan?.id === plan.id">
+                    <i class="pi pi-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading plans -->
+        <div class="plans-loading" *ngIf="plans.length === 0">
+            <i class="pi pi-spin pi-spinner"></i> Loading plans...
+        </div>
+
+        <!-- Pay button -->
+        <button
+            class="pay-btn"
+            [class.pay-btn--loading]="paymentLoading"
+            [disabled]="!selectedPlan || paymentLoading"
+            (click)="buyPlan()">
+            <span *ngIf="!paymentLoading">
+                <i class="pi pi-lock"></i>
+                Pay ₹{{ selectedPlan?.amount | number:'1.0-0' }} — {{ selectedPlan?.name }}
+            </span>
+            <span *ngIf="paymentLoading">
+                <i class="pi pi-spin pi-spinner"></i> Processing...
+            </span>
+        </button>
+
+        <!-- Close -->
+        <button class="subscription-card__close" (click)="closeSubscriptionScreen()">
+            <i class="pi pi-times"></i>
+        </button>
+
+    </div>
+</div>

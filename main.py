@@ -74,6 +74,7 @@ if SYSTEM == "Windows":
         gui="edgechromium",
         http_server=True,
         private_mode=False,
+        debug=True,
         args=["--allow-file-access-from-files", "--disable-web-security"]
     )
 else:

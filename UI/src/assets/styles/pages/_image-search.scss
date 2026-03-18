@@ -106,3 +106,229 @@
         margin-top: 2rem;
     }
 }
+
+// ── Append these to your existing image-search.scss ──────────────────
+
+// ── Search counter badge ──────────────────────────────────────────────
+.search-badge {
+  display:      inline-flex;
+  align-items:  center;
+  gap:          8px;
+  background:   rgba(245, 158, 11, 0.12);
+  border:       1px solid rgba(245, 158, 11, 0.3);
+  color:        #f59e0b;
+  font-size:    13px;
+  font-weight:  600;
+  padding:      6px 14px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+
+  &--active {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #10b981;
+  }
+}
+
+// ── Subscription overlay ──────────────────────────────────────────────
+.subscription-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index:         9999;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  padding:         20px;
+}
+
+.subscription-card {
+  background:    #13151f;
+  border:        1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding:       40px;
+  width:         100%;
+  max-width:     520px;
+  position:      relative;
+  box-shadow:    0 24px 64px rgba(0,0,0,0.6);
+
+  &__header {
+    text-align:    center;
+    margin-bottom: 32px;
+  }
+
+  &__icon {
+    width:         56px;
+    height:        56px;
+    background:    rgba(245,158,11,0.15);
+    border-radius: 16px;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    margin:        0 auto 16px;
+
+    i {
+      font-size: 24px;
+      color:     #f59e0b;
+    }
+  }
+
+  &__title {
+    font-size:   22px;
+    font-weight: 700;
+    color:       #fff;
+    margin:      0 0 8px;
+  }
+
+  &__subtitle {
+    font-size: 14px;
+    color:     rgba(255,255,255,0.5);
+    margin:    0;
+  }
+
+  &__close {
+    position:      absolute;
+    top:           16px;
+    right:         16px;
+    background:    none;
+    border:        none;
+    color:         rgba(255,255,255,0.3);
+    font-size:     16px;
+    cursor:        pointer;
+    width:         32px;
+    height:        32px;
+    border-radius: 8px;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    transition:    all 0.15s;
+
+    &:hover {
+      background: rgba(255,255,255,0.08);
+      color:      #fff;
+    }
+  }
+}
+
+// ── Plans ─────────────────────────────────────────────────────────────
+.plans {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   12px;
+  margin-bottom:         24px;
+}
+
+.plans-loading {
+  text-align:    center;
+  color:         rgba(255,255,255,0.4);
+  padding:       24px 0;
+  margin-bottom: 24px;
+  font-size:     14px;
+}
+
+.plan-card {
+  background:    rgba(255,255,255,0.04);
+  border:        2px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding:       20px 16px;
+  text-align:    center;
+  cursor:        pointer;
+  position:      relative;
+  transition:    all 0.2s;
+
+  &:hover {
+    border-color: rgba(79,70,229,0.5);
+    background:   rgba(79,70,229,0.06);
+  }
+
+  &--selected {
+    border-color: #4f46e5 !important;
+    background:   rgba(79,70,229,0.12) !important;
+  }
+
+  &__name {
+    font-size:     12px;
+    font-weight:   600;
+    color:         rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  &__price {
+    display:     flex;
+    align-items: baseline;
+    justify-content: center;
+    gap:         2px;
+    margin-bottom: 4px;
+  }
+
+  &__currency {
+    font-size:   14px;
+    color:       #fff;
+    font-weight: 600;
+  }
+
+  &__amount {
+    font-size:   28px;
+    font-weight: 800;
+    color:       #fff;
+    line-height: 1;
+  }
+
+  &__duration {
+    font-size: 11px;
+    color:     rgba(255,255,255,0.35);
+  }
+
+  &__check {
+    position:      absolute;
+    top:           8px;
+    right:         8px;
+    width:         20px;
+    height:        20px;
+    background:    #4f46e5;
+    border-radius: 50%;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+
+    i {
+      font-size: 10px;
+      color:     #fff;
+    }
+  }
+}
+
+// ── Pay button ────────────────────────────────────────────────────────
+.pay-btn {
+  width:         100%;
+  padding:       14px;
+  background:    #4f46e5;
+  border:        none;
+  border-radius: 12px;
+  color:         #fff;
+  font-size:     15px;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    all 0.2s;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+
+  &:hover:not(:disabled) {
+    background: #4338ca;
+    transform:  translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor:  not-allowed;
+  }
+
+  &--loading {
+    opacity: 0.8;
+  }
+}
