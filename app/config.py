@@ -44,5 +44,5 @@ MODEL_ENC_PATH = os.path.join(BASE_DIR, "models", "clip_vitb32.onnx.enc")
 TOKEN_FILE     = os.path.join(os.path.expanduser("~"), ".visara_token")
 
 SUPABASE_EDGE = "https://qpxvwdxuhgbthzbcppye.supabase.co/functions/v1"
-APP_VERSION   = "1.1.0"
+APP_VERSION   = "1.1.1"
 VERSION_URL   = "https://raw.githubusercontent.com/Aatmanbho2429/Visara/main/version.json"  # ← fixed repo name
