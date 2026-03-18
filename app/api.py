@@ -2,8 +2,9 @@ import json
 import os
 import platform
 import subprocess
+import requests
 import webview
-from app.config import IMAGE_EXTENSIONS_FOR_FILE
+from app.config import IMAGE_EXTENSIONS_FOR_FILE, SUPABASE_EDGE
 from app.core.progress import get_progress
 from app.services import search_service, sync_service
 from app.services import folder_status_service
@@ -20,7 +21,7 @@ def set_window(win):
 
 class Api:
 
-    # ── selectFile — uses pywebview native dialog (no tkinter, no crash) ──
+    # ── selectFile ─────────────────────────────────────────────────────────
     def selectFile(self):
         if _window is None:
             return ""
@@ -28,7 +29,7 @@ class Api:
             "Image Files (*.jpg;*.jpeg;*.png;*.tiff;*.tif;*.bmp;*.webp;*.psd;*.psb)",
         )
         result = _window.create_file_dialog(
-            dialog_type=webview.OPEN_DIALOG,          # OPEN_DIALOG
+            dialog_type=webview.OPEN_DIALOG,
             allow_multiple=False,
             file_types=file_types
         )
@@ -36,12 +37,12 @@ class Api:
             return result[0]
         return ""
 
-    # ── selectFolder — uses pywebview native dialog (no tkinter, no crash) ──
+    # ── selectFolder ───────────────────────────────────────────────────────
     def selectFolder(self):
         if _window is None:
             return ""
         result = _window.create_file_dialog(
-            dialog_type=webview.FOLDER_DIALOG           # FOLDER_DIALOG
+            dialog_type=webview.FOLDER_DIALOG
         )
         if result and len(result) > 0:
             return result[0]
@@ -153,3 +154,81 @@ class Api:
             return json.dumps(entries)
         finally:
             con.close()
+
+    # ── Subscription ───────────────────────────────────────────────────────
+
+    def getPlans(self):
+        """Fetch active plans from Supabase."""
+        try:
+            r = requests.get(
+                f"{SUPABASE_EDGE}/get-plans",
+                timeout=10
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
+
+    def decrementSearch(self, user_id: str):
+        """Called before every search — decrements free count or validates subscription."""
+        try:
+            r = requests.post(
+                f"{SUPABASE_EDGE}/decrement-search",
+                json={"user_id": user_id},
+                timeout=10
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
+
+    def createOrder(self, user_id: str, plan_id: str):
+        """Creates a Razorpay order and returns order_id + key_id."""
+        try:
+            r = requests.post(
+                f"{SUPABASE_EDGE}/create-order",
+                json={"user_id": user_id, "plan_id": plan_id},
+                timeout=15
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
+
+    def verifyPayment(self, razorpay_order_id: str, razorpay_payment_id: str,
+                      razorpay_signature: str, user_id: str, plan_id: str):
+        """Verifies Razorpay payment signature and activates subscription."""
+        try:
+            r = requests.post(
+                f"{SUPABASE_EDGE}/verify-payment",
+                json={
+                    "razorpay_order_id":   razorpay_order_id,
+                    "razorpay_payment_id": razorpay_payment_id,
+                    "razorpay_signature":  razorpay_signature,
+                    "user_id":             user_id,
+                    "plan_id":             plan_id,
+                },
+                timeout=15
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
+
+    def registerRequest(self, first_name: str, last_name: str, email: str,
+                        phone_number: str, company_name: str,
+                        password: str, device_id: str):
+        """Sends registration request email to admin via Supabase Edge Function."""
+        try:
+            r = requests.post(
+                f"{SUPABASE_EDGE}/register-request",
+                json={
+                    "first_name":   first_name,
+                    "last_name":    last_name,
+                    "email":        email,
+                    "phone_number": phone_number,
+                    "company_name": company_name,
+                    "password":     password,
+                    "device_id":    device_id,
+                },
+                timeout=15
+            )
+            return json.dumps(r.json())
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
