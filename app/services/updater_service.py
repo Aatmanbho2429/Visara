@@ -169,7 +169,7 @@ del "%~f0"
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
         close_fds=True
     )
-    sys.exit(0)
+    os._exit(0)       # ← force exit
 
 
 def _install_macos(zip_path: str):
@@ -224,4 +224,4 @@ rm -f "$0"
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    sys.exit(0)
+    os._exit(0)       # ← force exit

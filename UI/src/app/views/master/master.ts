@@ -97,7 +97,7 @@ export class Master implements OnInit, OnDestroy {
         }
       } catch {}
       this.validateLogin();
-    }, 1000);
+    }, 1500);
   }
 
   // ── Password strength ─────────────────────────────────────────────────
