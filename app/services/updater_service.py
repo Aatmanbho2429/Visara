@@ -53,14 +53,21 @@ def was_just_updated() -> dict:
     Call this on app start — returns update info if app was just updated.
     Deletes the flag file after reading so it only shows once.
     """
+    print(f"[updater] Checking flag file: {UPDATE_FLAG_FILE}", flush=True)
+
     if not os.path.exists(UPDATE_FLAG_FILE):
+        print("[updater] No flag file found", flush=True)
         return {"updated": False}
+
     try:
         with open(UPDATE_FLAG_FILE, "r") as f:
             version = f.read().strip()
-        os.remove(UPDATE_FLAG_FILE)   # ← delete so it only shows once
+        print(f"[updater] Flag found! Updated to v{version}", flush=True)
+        os.remove(UPDATE_FLAG_FILE)
+        print("[updater] Flag file deleted", flush=True)
         return {"updated": True, "version": version}
-    except Exception:
+    except Exception as e:
+        print(f"[updater] Flag read error: {e}", flush=True)
         return {"updated": False}
 
 

@@ -121,6 +121,9 @@
             </div>
             <h3 class="download-blocker__title">Update Failed</h3>
             <p class="download-blocker__subtitle">{{ updateError }}</p>
+            <p class="download-blocker__subtitle" style="font-size:11px; margin-top: -12px;">
+                Check log: <strong>%TEMP%\visara_update.log</strong>
+            </p>
             <button class="login-btn" style="margin-top: 8px;" (click)="dismissUpdateError()">
                 <span class="login-btn__text">
                     <i class="pi pi-arrow-left"></i> Go Back
