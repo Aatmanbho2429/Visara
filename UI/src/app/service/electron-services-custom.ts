@@ -107,6 +107,11 @@ export class ElectronServicesCustom {
     return typeof raw === 'string' ? JSON.parse(raw) : raw;
   }
 
+  async wasJustUpdated(): Promise<any> {
+    const raw = await (window as any).pywebview.api.wasJustUpdated();
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  }
+
   async registerRequest(
     first_name:   string,
     last_name:    string,

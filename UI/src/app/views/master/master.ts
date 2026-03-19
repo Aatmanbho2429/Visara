@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { PrimengComponentsModule } from '../../shared/primeng-components-module';
@@ -16,7 +16,7 @@ import { verifyLicenseResponse } from '../../models/response/verifyLicenseRespon
   templateUrl: './master.html',
   styleUrl:    './master.scss',
 })
-export class Master implements OnInit {
+export class Master implements OnInit, OnDestroy {
 
   items: MenuItem[] | undefined;
   public subscriptions = new Subscription();
@@ -48,6 +48,19 @@ export class Master implements OnInit {
     confirm_password: '',
   };
 
+  // ── Update ────────────────────────────────────────────────────────────
+  public showUpdateBanner:  boolean = false;
+  public showUpdatedBanner: boolean = false;   // shown after successful update
+  public updatedToVersion:  string  = '';
+  public updateVersion:     string  = '';
+  public updateUrl:         string  = '';
+  public updateNotes:       string  = '';
+  public updateDownloading: boolean = false;
+  public updateError:       string  = '';    // error message if download fails
+  public updateProgress:    number  = 0;     // 0-100
+  public updateStatus:      string  = '';    // status message
+  private updateInterval: any = null;   // periodic check handle
+
   public email: string = 'aatmanbhoraniya12@gmail.com';
   isSidebarCollapsed = false;
 
@@ -65,13 +78,32 @@ export class Master implements OnInit {
   ) { }
 
   async ngOnInit() {
-    setTimeout(() => { this.validateLogin(); }, 1000);
+    // ── Check if just updated — show success message ────────────────
+    setTimeout(async () => {
+      try {
+        const raw    = await this.electronServiceCustom.wasJustUpdated();
+        const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (result.updated) {
+          this.ngZone.run(() => {
+            this.showUpdatedBanner = true;
+            this.updatedToVersion  = result.version;
+            this.cdr.markForCheck();
+            // Auto-hide after 6 seconds
+            setTimeout(() => {
+              this.showUpdatedBanner = false;
+              this.cdr.markForCheck();
+            }, 6000);
+          });
+        }
+      } catch {}
+      this.validateLogin();
+    }, 1000);
   }
 
   // ── Password strength ─────────────────────────────────────────────────
   get passwordStrength(): 'weak' | 'medium' | 'strong' {
     const p = this.registerForm.password;
-    if (!p || p.length < 8)  return 'weak';
+    if (!p || p.length < 8) return 'weak';
     const hasUpper   = /[A-Z]/.test(p);
     const hasLower   = /[a-z]/.test(p);
     const hasNumber  = /[0-9]/.test(p);
@@ -95,6 +127,8 @@ export class Master implements OnInit {
         this.verifyLicenseResponse.first_name = response.user?.first_name || '';
         this.verifyLicenseResponse.email      = response.user?.email      || '';
         this.userState.setUser(response.user);
+        this.checkForUpdate();                  // ← check on auto-login
+        this.startUpdatePolling();              // ← poll every 4 hours
       } else {
         this.isLoginRequired = true;
         this.loginError      = '';
@@ -121,6 +155,8 @@ export class Master implements OnInit {
         this.loginFirstName = response.user?.first_name || 'there';
         this.loginSuccess   = true;
         this.userState.setUser(response.user);
+        this.checkForUpdate();                  // ← check on manual login
+        this.startUpdatePolling();              // ← poll every 4 hours
         setTimeout(() => {
           this.isLoginRequired = false;
           this.loginSuccess    = false;
@@ -142,10 +178,12 @@ export class Master implements OnInit {
 
   async logout() {
     await this.electronServiceCustom.logout();
-    this.isLoginRequired = true;
-    this.loginEmail      = '';
-    this.loginPassword   = '';
-    this.loginError      = '';
+    this.isLoginRequired  = true;
+    this.loginEmail       = '';
+    this.loginPassword    = '';
+    this.loginError       = '';
+    this.showUpdateBanner = false;
+    this.stopUpdatePolling();
     this.userState.clear();
     this.cdr.markForCheck();
   }
@@ -173,7 +211,6 @@ export class Master implements OnInit {
   async submitRegister() {
     const f = this.registerForm;
 
-    // ── UI validations ────────────────────────────────────────────────
     if (!f.first_name.trim() || !f.last_name.trim()) {
       this.registerError = 'First name and last name are required.';
       return;
@@ -200,10 +237,8 @@ export class Master implements OnInit {
     this.cdr.markForCheck();
 
     try {
-      // ── Get device ID from Python ─────────────────────────────────
       const deviceId = await this.electronServiceCustom.getDeviceId();
 
-      // ── Call register-request via Python api ─────────────────────
       const result = await this.electronServiceCustom.registerRequest(
         f.first_name.trim(),
         f.last_name.trim(),
@@ -216,8 +251,7 @@ export class Master implements OnInit {
 
       this.ngZone.run(() => {
         if (result.success) {
-          this.registerSuccess = true;
-          // Clear sensitive data from memory
+          this.registerSuccess           = true;
           this.registerForm.password         = '';
           this.registerForm.confirm_password = '';
         } else {
@@ -234,6 +268,92 @@ export class Master implements OnInit {
         this.cdr.markForCheck();
       });
     }
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────
+
+  async checkForUpdate() {
+    try {
+      const raw    = await this.electronServiceCustom.checkForUpdate();
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (result.available) {
+        this.ngZone.run(() => {
+          this.showUpdateBanner = true;
+          this.updateVersion    = result.version;
+          this.updateUrl        = result.url;
+          this.updateNotes      = result.release_notes || '';
+          this.cdr.markForCheck();
+        });
+      }
+    } catch (e) {
+      console.log('[update] check failed:', e);
+    }
+  }
+
+  async doUpdate() {
+    this.updateDownloading = true;
+    this.updateError       = '';
+    this.updateProgress    = 0;
+    this.updateStatus      = 'Preparing download...';
+    this.cdr.markForCheck();
+
+    // ── Register global callback — Python calls this via evaluate_js ──
+    (window as any).onUpdateProgress = (pct: number, status: string) => {
+      this.ngZone.run(() => {
+        this.updateProgress = pct;
+        this.updateStatus   = status;
+        this.cdr.markForCheck();
+      });
+    };
+
+    try {
+      const result = await this.electronServiceCustom.downloadUpdate(
+        this.updateUrl, this.updateVersion
+      );
+      // Only reaches here if download failed (success = sys.exit on Python side)
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+      this.ngZone.run(() => {
+        this.updateDownloading = false;
+        this.updateError       = parsed?.message || 'Download failed. Please try again.';
+        this.cdr.markForCheck();
+      });
+    } catch (e: any) {
+      this.ngZone.run(() => {
+        this.updateDownloading = false;
+        this.updateError       = e?.message || 'Download failed. Please try again.';
+        this.cdr.markForCheck();
+      });
+    }
+  }
+
+  dismissUpdateError() {
+    this.updateError       = '';
+    this.updateDownloading = false;
+    this.cdr.markForCheck();
+  }
+
+  dismissUpdate() {
+    this.showUpdateBanner = false;
+    this.cdr.markForCheck();
+  }
+
+  startUpdatePolling() {
+    this.stopUpdatePolling();                   // clear any existing
+    // Check every 4 hours (4 * 60 * 60 * 1000)
+    this.updateInterval = setInterval(() => {
+      this.checkForUpdate();
+    }, 4 * 60 * 60 * 1000);
+  }
+
+  stopUpdatePolling() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+      this.updateInterval = null;
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopUpdatePolling();
   }
 
   // ── Misc ──────────────────────────────────────────────────────────────

@@ -48,6 +48,93 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
+     UPDATED SUCCESS BANNER — shown once after successful update
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="update-banner update-banner--success" *ngIf="showUpdatedBanner">
+    <div class="update-banner__content">
+        <i class="pi pi-check-circle update-banner__icon"></i>
+        <div class="update-banner__text">
+            <strong>Successfully updated to v{{ updatedToVersion }}!</strong>
+            <span> — You're running the latest version of Visara.</span>
+        </div>
+        <button class="update-banner__dismiss" (click)="showUpdatedBanner = false">
+            <i class="pi pi-times"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     UPDATE BANNER — shown after login if new version available
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="update-banner" *ngIf="showUpdateBanner && !updateDownloading">
+    <div class="update-banner__content">
+        <i class="pi pi-arrow-circle-up update-banner__icon"></i>
+        <div class="update-banner__text">
+            <strong>Version {{ updateVersion }} is available!</strong>
+            <span *ngIf="updateNotes"> — {{ updateNotes }}</span>
+        </div>
+        <button class="update-banner__btn" (click)="doUpdate()">
+            <i class="pi pi-download"></i> Update Now
+        </button>
+        <button class="update-banner__dismiss" (click)="dismissUpdate()">
+            <i class="pi pi-times"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     DOWNLOAD BLOCKER — full screen overlay while downloading
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="download-blocker" *ngIf="updateDownloading || updateError">
+    <div class="download-blocker__card">
+
+        <!-- ── Downloading state ── -->
+        <ng-container *ngIf="!updateError">
+            <div class="download-blocker__spinner">
+                <i class="pi pi-spin pi-spinner"></i>
+            </div>
+            <h3 class="download-blocker__title">Updating to v{{ updateVersion }}</h3>
+
+            <!-- Progress bar -->
+            <div class="download-progress">
+                <div class="download-progress__bar">
+                    <div class="download-progress__fill"
+                         [style.width.%]="updateProgress">
+                    </div>
+                </div>
+                <span class="download-progress__pct">{{ updateProgress }}%</span>
+            </div>
+
+            <!-- Status message -->
+            <p class="download-blocker__status">{{ updateStatus }}</p>
+
+            <div class="download-blocker__warning">
+                <i class="pi pi-exclamation-triangle"></i>
+                Do not close the app
+            </div>
+        </ng-container>
+
+        <!-- ── Error state ── -->
+        <ng-container *ngIf="updateError">
+            <div class="download-blocker__spinner download-blocker__spinner--error">
+                <i class="pi pi-times-circle"></i>
+            </div>
+            <h3 class="download-blocker__title">Update Failed</h3>
+            <p class="download-blocker__subtitle">{{ updateError }}</p>
+            <p class="download-blocker__subtitle" style="font-size:11px; margin-top: -12px;">
+                Check log: <strong>%TEMP%\visara_update.log</strong>
+            </p>
+            <button class="login-btn" style="margin-top: 8px;" (click)="dismissUpdateError()">
+                <span class="login-btn__text">
+                    <i class="pi pi-arrow-left"></i> Go Back
+                </span>
+            </button>
+        </ng-container>
+
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
      LOGIN OVERLAY
      ══════════════════════════════════════════════════════════════════════ -->
 <div class="login-overlay" *ngIf="isLoginRequired && !showRegister">
@@ -179,7 +266,6 @@
                 <p class="login-card__subtitle">Fill your details — we'll activate your account</p>
             </div>
 
-            <!-- First + Last Name -->
             <div class="register-row">
                 <div class="login-field">
                     <label class="login-field__label">First Name <span class="req">*</span></label>
@@ -201,7 +287,6 @@
                 </div>
             </div>
 
-            <!-- Email -->
             <div class="login-field">
                 <label class="login-field__label">Email <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -212,7 +297,6 @@
                 </div>
             </div>
 
-            <!-- Phone -->
             <div class="login-field">
                 <label class="login-field__label">Phone Number</label>
                 <div class="login-field__wrap">
@@ -223,7 +307,6 @@
                 </div>
             </div>
 
-            <!-- Company -->
             <div class="login-field">
                 <label class="login-field__label">Company Name</label>
                 <div class="login-field__wrap">
@@ -234,7 +317,6 @@
                 </div>
             </div>
 
-            <!-- Password -->
             <div class="login-field">
                 <label class="login-field__label">Password <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -247,7 +329,6 @@
                         [(ngModel)]="registerForm.password"
                         [disabled]="registerLoading" />
                 </div>
-                <!-- Password strength hint -->
                 <div class="password-hint" *ngIf="registerForm.password">
                     <div class="password-strength">
                         <div class="password-strength__bar"
@@ -265,7 +346,6 @@
                 </div>
             </div>
 
-            <!-- Confirm Password -->
             <div class="login-field">
                 <label class="login-field__label">Confirm Password <span class="req">*</span></label>
                 <div class="login-field__wrap">
@@ -278,7 +358,6 @@
                         placeholder="Re-enter password"
                         [(ngModel)]="registerForm.confirm_password"
                         [disabled]="registerLoading" />
-                    <!-- Match indicator -->
                     <i class="pi login-field__check"
                        [class.pi-check-circle]="registerForm.confirm_password && registerForm.password === registerForm.confirm_password"
                        [class.pi-times-circle]="registerForm.confirm_password && registerForm.password !== registerForm.confirm_password"
@@ -291,13 +370,11 @@
                 </span>
             </div>
 
-            <!-- Error -->
             <div class="login-error" *ngIf="registerError">
                 <i class="pi pi-exclamation-circle"></i>
                 <span>{{ registerError }}</span>
             </div>
 
-            <!-- Submit -->
             <button
                 class="login-btn"
                 [class.login-btn--loading]="registerLoading"

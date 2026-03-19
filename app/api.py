@@ -73,16 +73,23 @@ class Api:
         return json.dumps(result)
 
     def downloadUpdate(self, url: str, version: str):
-        from threading import Thread
-        from app.core.progress import set_progress
-        def cb(pct):
-            set_progress(done=pct, total=100, phase="updating")
-        Thread(
-            target=updater_service.download_and_install,
-            args=(url, version, cb),
-            daemon=True
-        ).start()
-        return json.dumps({"success": True, "message": "Downloading..."})
+        """Blocking download — pushes progress to Angular via evaluate_js."""
+        try:
+            def on_progress(pct: int, status: str):
+                """Push progress update to Angular in real time."""
+                if _window:
+                    try:
+                        safe_status = status.replace("'", "\'")
+                        _window.evaluate_js(
+                            f"window.onUpdateProgress && window.onUpdateProgress({pct}, '{safe_status}')"
+                        )
+                    except Exception:
+                        pass
+
+            updater_service.download_and_install(url, version, progress_cb=on_progress)
+            return json.dumps({"success": False, "message": "Update failed to apply."})
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
 
     # ── Search & Sync ──────────────────────────────────────────────────────
 
@@ -232,3 +239,8 @@ class Api:
             return json.dumps(r.json())
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
+
+    def wasJustUpdated(self):
+        """Returns update info if app was just updated — only shows once."""
+        from app.services.updater_service import was_just_updated
+        return json.dumps(was_just_updated())
