@@ -2,7 +2,7 @@
   "version": "1.1.7",
   "release_notes": "See GitHub release notes for details",
   "windows": {
-    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.1.7/Visara-Windows.exe"
+    "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.1.7/Visara.exe"
   },
   "macos_arm": {
     "url": "https://github.com/Aatmanbho2429/Visara/releases/download/v1.1.7/Visara-macOS-Apple-Silicon.zip"
