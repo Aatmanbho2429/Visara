@@ -5,10 +5,10 @@ import requests
 import zipfile
 import tempfile
 import subprocess
-from app.config import APP_VERSION, VERSION_URL, DATA_DIR
+from app.config import APP_VERSION, VERSION_URL
 
-# ── Flag file written before update, read after relaunch ─────────────
-UPDATE_FLAG_FILE = os.path.join(DATA_DIR, ".visara_updated")
+# ── Flag file — same location as token file (~/.visara_updated) ──────
+UPDATE_FLAG_FILE = os.path.join(os.path.expanduser("~"), ".visara_updated")
 
 
 def _parse_version(v):
@@ -67,7 +67,6 @@ def was_just_updated() -> dict:
 def _write_update_flag(version: str):
     """Write flag file before exiting — read on next launch."""
     try:
-        os.makedirs(DATA_DIR, exist_ok=True)
         with open(UPDATE_FLAG_FILE, "w") as f:
             f.write(version)
     except Exception:
