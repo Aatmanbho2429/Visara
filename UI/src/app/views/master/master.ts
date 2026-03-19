@@ -57,6 +57,8 @@ export class Master implements OnInit, OnDestroy {
   public updateNotes:       string  = '';
   public updateDownloading: boolean = false;
   public updateError:       string  = '';    // error message if download fails
+  public updateProgress:    number  = 0;     // 0-100
+  public updateStatus:      string  = '';    // status message
   private updateInterval: any = null;   // periodic check handle
 
   public email: string = 'aatmanbhoraniya12@gmail.com';
@@ -291,11 +293,30 @@ export class Master implements OnInit, OnDestroy {
   async doUpdate() {
     this.updateDownloading = true;
     this.updateError       = '';
+    this.updateProgress    = 0;
+    this.updateStatus      = 'Preparing download...';
     this.cdr.markForCheck();
+
+    // ── Register global callback — Python calls this via evaluate_js ──
+    (window as any).onUpdateProgress = (pct: number, status: string) => {
+      this.ngZone.run(() => {
+        this.updateProgress = pct;
+        this.updateStatus   = status;
+        this.cdr.markForCheck();
+      });
+    };
+
     try {
-      await this.electronServiceCustom.downloadUpdate(this.updateUrl, this.updateVersion);
-      // If we get here — download succeeded, app will exit via Python
-      // This line only runs if something went wrong on Python side
+      const result = await this.electronServiceCustom.downloadUpdate(
+        this.updateUrl, this.updateVersion
+      );
+      // Only reaches here if download failed (success = sys.exit on Python side)
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+      this.ngZone.run(() => {
+        this.updateDownloading = false;
+        this.updateError       = parsed?.message || 'Download failed. Please try again.';
+        this.cdr.markForCheck();
+      });
     } catch (e: any) {
       this.ngZone.run(() => {
         this.updateDownloading = false;

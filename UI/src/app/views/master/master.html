@@ -93,11 +93,21 @@
             <div class="download-blocker__spinner">
                 <i class="pi pi-spin pi-spinner"></i>
             </div>
-            <h3 class="download-blocker__title">Updating Visara...</h3>
-            <p class="download-blocker__subtitle">
-                Downloading v{{ updateVersion }} — please wait.<br/>
-                The app will restart automatically when done.
-            </p>
+            <h3 class="download-blocker__title">Updating to v{{ updateVersion }}</h3>
+
+            <!-- Progress bar -->
+            <div class="download-progress">
+                <div class="download-progress__bar">
+                    <div class="download-progress__fill"
+                         [style.width.%]="updateProgress">
+                    </div>
+                </div>
+                <span class="download-progress__pct">{{ updateProgress }}%</span>
+            </div>
+
+            <!-- Status message -->
+            <p class="download-blocker__status">{{ updateStatus }}</p>
+
             <div class="download-blocker__warning">
                 <i class="pi pi-exclamation-triangle"></i>
                 Do not close the app

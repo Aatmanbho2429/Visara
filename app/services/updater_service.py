@@ -79,26 +79,36 @@ def download_and_install(url: str, version: str, progress_cb=None):
     tmp    = os.path.join(tempfile.gettempdir(), f"Visara-{version}{suffix}")
 
     try:
-        # ── Download with progress ────────────────────────────────────
+        # ── Connect ───────────────────────────────────────────────────
+        _notify(progress_cb, 0, "Connecting to server...")
         r = requests.get(url, stream=True, timeout=120)
         if r.status_code != 200:
             raise Exception(f"Download failed: HTTP {r.status_code}")
 
         total = int(r.headers.get("content-length", 0))
         done  = 0
+        total_mb = round(total / (1024 * 1024), 1) if total else 0
 
+        _notify(progress_cb, 0, f"Starting download ({total_mb} MB)...")
+
+        # ── Download chunk by chunk ───────────────────────────────────
         with open(tmp, "wb") as f:
-            for chunk in r.iter_content(8192):
+            for chunk in r.iter_content(65536):   # 64KB chunks
                 f.write(chunk)
                 done += len(chunk)
-                if progress_cb and total:
-                    progress_cb(int(done / total * 100))
+                if total:
+                    pct      = int(done / total * 100)
+                    done_mb  = round(done  / (1024 * 1024), 1)
+                    status   = f"Downloading... {done_mb} MB / {total_mb} MB"
+                    _notify(progress_cb, pct, status)
 
-        # ── Verify file was actually downloaded ───────────────────────
+        # ── Verify ────────────────────────────────────────────────────
+        _notify(progress_cb, 99, "Verifying download...")
         if not os.path.exists(tmp) or os.path.getsize(tmp) < 1024:
             raise Exception("Downloaded file is empty or corrupted.")
 
-        # ── Write flag before exit ────────────────────────────────────
+        # ── Write flag + install ──────────────────────────────────────
+        _notify(progress_cb, 100, "Applying update...")
         _write_update_flag(version)
 
         if system == "Windows":
@@ -107,15 +117,30 @@ def download_and_install(url: str, version: str, progress_cb=None):
             _install_macos(tmp)
 
     except requests.exceptions.ConnectionError:
+        if os.path.exists(tmp):
+            try: os.remove(tmp)
+            except: pass
         raise Exception("No internet connection. Please check your network.")
     except requests.exceptions.Timeout:
+        if os.path.exists(tmp):
+            try: os.remove(tmp)
+            except: pass
         raise Exception("Download timed out. Please try again.")
     except Exception as e:
-        # Clean up partial download
         if os.path.exists(tmp):
             try: os.remove(tmp)
             except: pass
         raise
+
+
+def _notify(progress_cb, pct: int, status: str):
+    """Send progress update to Angular via callback."""
+    print(f"[updater] {pct}% — {status}", flush=True)
+    if progress_cb:
+        try:
+            progress_cb(pct, status)
+        except Exception:
+            pass
 
 
 def _install_windows(new_exe: str):
