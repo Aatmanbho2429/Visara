@@ -79,25 +79,44 @@ def download_and_install(url: str, version: str, progress_cb=None):
     suffix = ".exe" if system == "Windows" else ".zip"
     tmp    = os.path.join(tempfile.gettempdir(), f"Visara-{version}{suffix}")
 
-    # ── Download with progress ────────────────────────────────────────
-    r     = requests.get(url, stream=True, timeout=120)
-    total = int(r.headers.get("content-length", 0))
-    done  = 0
+    try:
+        # ── Download with progress ────────────────────────────────────
+        r = requests.get(url, stream=True, timeout=120)
+        if r.status_code != 200:
+            raise Exception(f"Download failed: HTTP {r.status_code}")
 
-    with open(tmp, "wb") as f:
-        for chunk in r.iter_content(8192):
-            f.write(chunk)
-            done += len(chunk)
-            if progress_cb and total:
-                progress_cb(int(done / total * 100))
+        total = int(r.headers.get("content-length", 0))
+        done  = 0
 
-    # ── Write flag before exit ────────────────────────────────────────
-    _write_update_flag(version)
+        with open(tmp, "wb") as f:
+            for chunk in r.iter_content(8192):
+                f.write(chunk)
+                done += len(chunk)
+                if progress_cb and total:
+                    progress_cb(int(done / total * 100))
 
-    if system == "Windows":
-        _install_windows(tmp)
-    elif system == "Darwin":
-        _install_macos(tmp)
+        # ── Verify file was actually downloaded ───────────────────────
+        if not os.path.exists(tmp) or os.path.getsize(tmp) < 1024:
+            raise Exception("Downloaded file is empty or corrupted.")
+
+        # ── Write flag before exit ────────────────────────────────────
+        _write_update_flag(version)
+
+        if system == "Windows":
+            _install_windows(tmp)
+        elif system == "Darwin":
+            _install_macos(tmp)
+
+    except requests.exceptions.ConnectionError:
+        raise Exception("No internet connection. Please check your network.")
+    except requests.exceptions.Timeout:
+        raise Exception("Download timed out. Please try again.")
+    except Exception as e:
+        # Clean up partial download
+        if os.path.exists(tmp):
+            try: os.remove(tmp)
+            except: pass
+        raise
 
 
 def _install_windows(new_exe: str):

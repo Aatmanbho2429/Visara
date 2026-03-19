@@ -85,20 +85,39 @@
 <!-- ══════════════════════════════════════════════════════════════════════
      DOWNLOAD BLOCKER — full screen overlay while downloading
      ══════════════════════════════════════════════════════════════════════ -->
-<div class="download-blocker" *ngIf="updateDownloading">
+<div class="download-blocker" *ngIf="updateDownloading || updateError">
     <div class="download-blocker__card">
-        <div class="download-blocker__spinner">
-            <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        <h3 class="download-blocker__title">Updating Visara...</h3>
-        <p class="download-blocker__subtitle">
-            Downloading v{{ updateVersion }} — please wait.<br/>
-            The app will restart automatically when done.
-        </p>
-        <div class="download-blocker__warning">
-            <i class="pi pi-exclamation-triangle"></i>
-            Do not close the app
-        </div>
+
+        <!-- ── Downloading state ── -->
+        <ng-container *ngIf="!updateError">
+            <div class="download-blocker__spinner">
+                <i class="pi pi-spin pi-spinner"></i>
+            </div>
+            <h3 class="download-blocker__title">Updating Visara...</h3>
+            <p class="download-blocker__subtitle">
+                Downloading v{{ updateVersion }} — please wait.<br/>
+                The app will restart automatically when done.
+            </p>
+            <div class="download-blocker__warning">
+                <i class="pi pi-exclamation-triangle"></i>
+                Do not close the app
+            </div>
+        </ng-container>
+
+        <!-- ── Error state ── -->
+        <ng-container *ngIf="updateError">
+            <div class="download-blocker__spinner download-blocker__spinner--error">
+                <i class="pi pi-times-circle"></i>
+            </div>
+            <h3 class="download-blocker__title">Update Failed</h3>
+            <p class="download-blocker__subtitle">{{ updateError }}</p>
+            <button class="login-btn" style="margin-top: 8px;" (click)="dismissUpdateError()">
+                <span class="login-btn__text">
+                    <i class="pi pi-arrow-left"></i> Go Back
+                </span>
+            </button>
+        </ng-container>
+
     </div>
 </div>
 

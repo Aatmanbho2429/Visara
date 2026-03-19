@@ -439,6 +439,8 @@
 
 // ── Append to bottom of master.scss ──────────────────────────────────
 
+// ── Append to bottom of master.scss ──────────────────────────────────
+
 // Register card — scrollable for more fields
 .register-card {
   max-height: 90vh;
@@ -664,4 +666,10 @@
     padding:       6px 14px;
     border-radius: 20px;
   }
+}
+
+// Error state spinner variant
+.download-blocker__spinner--error {
+  background: rgba(239,68,68,0.12) !important;
+  i { color: #f87171 !important; font-size: 28px; }
 }

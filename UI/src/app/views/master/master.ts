@@ -56,6 +56,7 @@ export class Master implements OnInit, OnDestroy {
   public updateUrl:         string  = '';
   public updateNotes:       string  = '';
   public updateDownloading: boolean = false;
+  public updateError:       string  = '';    // error message if download fails
   private updateInterval: any = null;   // periodic check handle
 
   public email: string = 'aatmanbhoraniya12@gmail.com';
@@ -289,8 +290,25 @@ export class Master implements OnInit, OnDestroy {
 
   async doUpdate() {
     this.updateDownloading = true;
+    this.updateError       = '';
     this.cdr.markForCheck();
-    await this.electronServiceCustom.downloadUpdate(this.updateUrl, this.updateVersion);
+    try {
+      await this.electronServiceCustom.downloadUpdate(this.updateUrl, this.updateVersion);
+      // If we get here — download succeeded, app will exit via Python
+      // This line only runs if something went wrong on Python side
+    } catch (e: any) {
+      this.ngZone.run(() => {
+        this.updateDownloading = false;
+        this.updateError       = e?.message || 'Download failed. Please try again.';
+        this.cdr.markForCheck();
+      });
+    }
+  }
+
+  dismissUpdateError() {
+    this.updateError       = '';
+    this.updateDownloading = false;
+    this.cdr.markForCheck();
   }
 
   dismissUpdate() {
